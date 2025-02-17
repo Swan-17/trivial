@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guess the Celebrity Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        .quiz-container {
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+        h2 {
+            font-size: 24px;
+        }
+        .btn {
+            padding: 10px;
+            margin: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        input[type="text"] {
+            padding: 8px;
+            width: 80%;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        .question-container {
+            margin-bottom: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        #category-select {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="quiz-container">
+        <div id="category-select">
+            <h3>Select a category:</h3>
+            <button class="btn" onclick="startQuiz('actors')">Actors</button>
+            <button class="btn" onclick="startQuiz('musicians')">Musicians</button>
+            <button class="btn" onclick="startQuiz('athletes')">Athletes</button>
+        </div>
+
+        <div class="question-container">
+            <h2 id="question">Loading...</h2>
+            <input type="text" id="answer" placeholder="Your guess...">
+        </div>
+
+        <button id="submit-btn" class="btn" onclick="checkAnswer()">Submit</button>
+        <button id="skip-btn" class="btn hidden" onclick="skipQuestion()">Skip Question</button>
+        <button id="reveal-btn" class="btn hidden" onclick="revealInitials()">Reveal Initials</button>
+
+        <div id="points" class="question-container">
+            <p>Points: <span id="score">0</span></p>
+        </div>
+    </div>
+
+    <script>
+        let celebrity = {};
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answeredCorrectly = false;
+
+        async function fetchCelebrity(category) {
+            // Simulate an API call to fetch a celebrity and questions based on category
+            // In a real-world scenario, replace this with a real API call
+            const response = await fetch(`https://api.example.com/celebrity?category=${category}`);
+            const data = await response.json();
+            return data;
+        }
+
+        async function startQuiz(category) {
+            document.getElementById('category-select').classList.add('hidden');
+            celebrity = await fetchCelebrity(category);
+            currentQuestionIndex = 0;
+            score = 0;
+            document.getElementById("score").textContent = score;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            // Reset state for each question
+            answeredCorrectly = false;
+            document.getElementById("answer").value = '';
+            document.getElementById("submit-btn").disabled = false;
+
+            if (currentQuestionIndex < celebrity.questions.length) {
+                document.getElementById("question").textContent = celebrity.questions[currentQuestionIndex].question;
+                document.getElementById("skip-btn").classList.remove("hidden");
+                document.getElementById("reveal-btn").classList.add("hidden");
+            }
+        }
+
+        function checkAnswer() {
+            const userAnswer = document.getElementById("answer").value.trim().toLowerCase();
+            const correctAnswer = celebrity.questions[currentQuestionIndex].answer.toLowerCase();
+
+            if (userAnswer === correctAnswer) {
+                score += (5 - currentQuestionIndex) * 10; // Points based on question number
+                document.getElementById("score").textContent = score;
+                answeredCorrectly = true;
+                alert('Correct!');
+            } else {
+                alert('Incorrect! Try the next question.');
+            }
+            currentQuestionIndex++;
+            if (currentQuestionIndex >= celebrity.questions.length) {
+                document.getElementById("reveal-btn").classList.remove("hidden");
+                document.getElementById("skip-btn").classList.add("hidden");
+            }
+            loadQuestion();
+        }
+
+        function skipQuestion() {
+            if (currentQuestionIndex < celebrity.questions.length) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function revealInitials() {
+            alert("The celebrity's initials are: " + celebrity.initials);
+        }
+    </script>
+
+</body>
+</html>
