@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WikiVibe Quiz Generator</title>
+    <title>Quiz Generator (Live Trivia)</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -11,304 +11,263 @@
 
     <!-- Header -->
     <header class="bg-slate-800 border-b border-slate-700 py-4 px-6 shadow-md">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
-                🧠 WikiVibe Quiz Generator
+        <div class="max-w-3xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+                ✨ Quiz Generator
             </h1>
-            <span id="stepIndicator" class="text-xs uppercase tracking-wider bg-slate-700 text-slate-300 py-1 px-3 rounded-full font-semibold">
-                Step 1: Choose Topic
+            <span class="text-xs uppercase tracking-wider bg-slate-700 text-slate-300 py-1 px-3 rounded-full font-semibold">
+                Infinite Practice
             </span>
         </div>
     </header>
 
     <!-- Main Container -->
-    <main class="max-w-2xl w-full mx-auto p-6 flex-grow flex flex-col justify-center">
+    <main class="max-w-xl w-full mx-auto p-6 flex-grow flex flex-col justify-center">
 
-        <!-- STEP 1: Enter Topic -->
-        <div id="viewTopic" class="space-y-6">
+        <!-- WELCOME / CONFIG VIEW -->
+        <div id="viewWelcome" class="space-y-6">
             <div class="text-center space-y-2">
-                <h2 class="text-2xl font-bold">What do you want to learn about?</h2>
-                <p class="text-slate-400 text-sm">Enter any topic. We will scrape Wikipedia and its core subtopics to generate your custom path.</p>
+                <h2 class="text-3xl font-extrabold">General Knowledge Quiz</h2>
+                <p class="text-slate-400 text-sm">Select your difficulty and play a fresh 20-question quiz pulled live from the internet — no API key needed.</p>
             </div>
-            <div class="space-y-4">
-                <input type="text" id="topicInput" placeholder="e.g., Quantum Computing, Ancient Rome, Jazz..." 
-                    class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
-                <button onclick="handleFetchPreview()" id="topicBtn"
-                    class="w-full bg-indigo-600 hover:bg-indigo-500 font-semibold py-3 rounded-xl transition shadow-lg shadow-indigo-600/30">
-                    Scrape & Generate Preview
+
+            <div class="space-y-4 w-full">
+                <!-- Difficulty Selection -->
+                <div class="space-y-2">
+                    <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold">Select Difficulty</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button id="btnEasy" class="diff-btn bg-slate-800 hover:bg-slate-700 border border-slate-700 py-3 rounded-xl text-sm font-bold transition" data-level="Easy">Easy</button>
+                        <button id="btnMedium" class="diff-btn bg-blue-600 border border-blue-500 py-3 rounded-xl text-sm font-bold transition shadow-lg shadow-blue-600/20" data-level="Medium">Medium</button>
+                        <button id="btnHard" class="diff-btn bg-slate-800 hover:bg-slate-700 border border-slate-700 py-3 rounded-xl text-sm font-bold transition" data-level="Hard">Hard</button>
+                    </div>
+                </div>
+
+                <button id="startQuizBtn"
+                    class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold py-4 rounded-xl transition shadow-lg shadow-blue-600/30 text-base">
+                    Start New Quiz 🚀
                 </button>
             </div>
         </div>
 
-        <!-- LOADING SPINNER -->
+        <!-- LOADING VIEW -->
         <div id="viewLoading" class="hidden text-center space-y-4 py-12">
-            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
-            <p id="loadingText" class="text-slate-400 font-medium">Scraping Wikipedia pages and subtopics...</p>
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+            <p id="loadingText" class="text-slate-400 font-medium">Shuffling your fresh 20-question quiz...</p>
         </div>
 
-        <!-- STEP 2: Difficulty Selection & 5 Example Questions Preview -->
-        <div id="viewPreview" class="hidden space-y-6">
-            <div class="space-y-1">
-                <h2 class="text-xl font-bold">Preview & Difficulty Level</h2>
-                <p class="text-slate-400 text-sm">Review these 5 progressive examples (Level 1 = Easiest, Level 5 = Hardest). Pick your tier for the full 20-question quiz.</p>
-            </div>
-
-            <!-- Context Box -->
-            <div class="bg-slate-800/50 border border-slate-700 p-4 rounded-xl text-xs text-slate-300 max-h-32 overflow-y-auto" id="wikiSummaryContainer">
-                <!-- Wiki summary injection -->
-            </div>
-
-            <!-- Example Questions List -->
-            <div id="exampleQuestionsList" class="space-y-3">
-                <!-- Dynamically injected example questions -->
-            </div>
-
-            <div class="space-y-3 pt-2">
-                <label class="block text-sm font-semibold text-slate-300">Select Your Quiz Difficulty Tier:</label>
-                <select id="difficultySelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-indigo-500">
-                    <option value="Beginner (Friendly & Fundamental)">Level 1-2: Beginner (Friendly & Fundamental)</option>
-                    <option value="Intermediate (Standard Trivia)" selected>Level 3: Intermediate (Standard Trivia)</option>
-                    <option value="Advanced / Expert (Niche & Deep Details)">Level 4-5: Advanced / Expert (Niche & Deep Details)</option>
-                </select>
-                <button onclick="handleStartFullQuiz()" 
-                    class="w-full bg-cyan-600 hover:bg-cyan-500 font-semibold py-3 rounded-xl transition shadow-lg shadow-cyan-600/30">
-                    Generate Full 20-Question Quiz 🚀
-                </button>
-            </div>
-        </div>
-
-        <!-- STEP 3: Taking the Quiz -->
+        <!-- QUIZ VIEW -->
         <div id="viewQuiz" class="hidden space-y-6">
             <div class="flex justify-between items-center text-sm text-slate-400 border-b border-slate-800 pb-3">
                 <span id="quizProgressText">Question 1 of 20</span>
-                <span id="quizScoreText" class="text-indigo-400 font-semibold">Score: 0</span>
+                <span id="quizScoreText" class="text-blue-400 font-semibold">Score: 0</span>
             </div>
 
             <div class="space-y-4">
                 <h3 id="questionTitle" class="text-lg font-bold text-slate-100">Question goes here?</h3>
-                <div id="optionsContainer" class="space-y-3">
-                    <!-- Options injected here -->
-                </div>
+                <div id="optionsContainer" class="space-y-3"></div>
             </div>
 
-            <button id="nextQuestionBtn" onclick="handleNextQuestion()" class="hidden w-full bg-indigo-600 hover:bg-indigo-500 font-semibold py-3 rounded-xl transition">
-                Next Question
+            <button id="nextQuestionBtn" class="hidden w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 font-semibold py-3 rounded-xl transition">
+                Next Question ➔
             </button>
         </div>
 
-        <!-- STEP 4: Results View -->
+        <!-- RESULTS VIEW -->
         <div id="viewResults" class="hidden text-center space-y-6">
             <div class="space-y-2">
                 <h2 class="text-3xl font-bold">Quiz Complete! 🎉</h2>
-                <p class="text-slate-400">Here is how you performed on your custom Wikipedia crawl.</p>
+                <p class="text-slate-400">Want to try another batch?</p>
             </div>
-            <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl max-w-xs mx-auto">
-                <span class="text-xs uppercase tracking-wider text-slate-400 block mb-1">Final Score</span>
-                <span id="finalScoreDisplay" class="text-4xl font-extrabold text-indigo-400">0 / 20</span>
+            <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl max-w-xs mx-auto space-y-2">
+                <span class="text-xs uppercase tracking-wider text-slate-400 block">Final Score</span>
+                <span id="finalScoreDisplay" class="text-4xl font-extrabold text-blue-400">0 / 20</span>
+                <p id="performanceVerdict" class="text-xs text-slate-300 font-medium pt-1"></p>
             </div>
-            <button onclick="location.reload()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 font-semibold py-3 rounded-xl transition">
-                Start New Topic
-            </button>
+            <div class="space-y-3 w-full max-w-xs mx-auto">
+                <button id="restartQuizBtn" class="w-full bg-blue-600 hover:bg-blue-500 font-semibold py-3.5 rounded-xl transition shadow-lg shadow-blue-600/30">
+                    Generate Another Quiz ⚡
+                </button>
+                <button id="changeDiffBtn" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 font-semibold py-3 rounded-xl transition">
+                    Change Difficulty
+                </button>
+            </div>
         </div>
 
     </main>
 
     <!-- Footer -->
     <footer class="text-center py-4 text-xs text-slate-500 border-t border-slate-800">
-        Powered by Wikipedia API & Gemini AI
+        Quiz Generator • Live questions from the Open Trivia Database, no API key required
     </footer>
 
     <!-- App Logic Script -->
     <script>
-        // ⚠️ HARDCODED API KEY (Replace or keep short-term as discussed)
-        const GEMINI_API_KEY = AQ.Ab8RN6KnQJrm9a5foD_wJDHBcJNMDKmuuHkujeXuLRzbSve3Rw; 
-        
-        let appState = {
-            topic: "",
-            wikiText: "",
-            exampleQuestions: [],
-            fullQuiz: [],
-            currentIndex: 0,
-            score: 0,
-            selectedDifficulty: ""
+        const DIFFICULTY_CONFIG = {
+            Easy:   { otdbDifficulty: 'easy',   categories: null },
+            Medium: { otdbDifficulty: 'medium', categories: null },
+            Hard:   { otdbDifficulty: 'hard',   categories: null }
         };
 
+        function decodeHtmlEntities(str) {
+            const txt = document.createElement('textarea');
+            txt.innerHTML = str;
+            return txt.value;
+        }
+
+        function shuffleArray(arr) {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function fetchQuestionsFromAPI(level, attempt = 1) {
+            const config = DIFFICULTY_CONFIG[level] || DIFFICULTY_CONFIG.Medium;
+            const category = config.categories
+                ? config.categories[Math.floor(Math.random() * config.categories.length)]
+                : null;
+
+            const params = new URLSearchParams({
+                amount: '20',
+                difficulty: config.otdbDifficulty,
+                type: 'multiple'
+            });
+            if (category) params.set('category', String(category));
+
+            const res = await fetch(`https://opentdb.com/api.php?${params.toString()}`);
+            if (!res.ok) {
+                throw new Error(`Network error (status ${res.status})`);
+            }
+            const data = await res.json();
+
+            if (data.response_code === 5 && attempt <= 3) {
+                await sleep(600 * attempt);
+                return fetchQuestionsFromAPI(level, attempt + 1);
+            }
+            if (data.response_code === 1) {
+                if (category) {
+                    return fetchQuestionsFromAPI(level, attempt);
+                }
+                throw new Error("Not enough questions available right now — try again.");
+            }
+            if (data.response_code !== 0 || !data.results || data.results.length === 0) {
+                throw new Error("The trivia service returned no questions. Please try again.");
+            }
+
+            return data.results.map(item => {
+                const correctText = decodeHtmlEntities(item.correct_answer);
+                const allOptions = shuffleArray([
+                    correctText,
+                    ...item.incorrect_answers.map(decodeHtmlEntities)
+                ]);
+                return {
+                    question: decodeHtmlEntities(item.question),
+                    options: allOptions,
+                    correctIndex: allOptions.indexOf(correctText)
+                };
+            });
+        }
+
+        const appState = {
+            view: 'viewWelcome',
+            difficulty: 'Medium',
+            questions: [],
+            currentIndex: 0,
+            score: 0
+        };
+
+        function saveState() {
+            localStorage.setItem('quizAppState', JSON.stringify(appState));
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('quizAppState');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    Object.assign(appState, parsed);
+                } catch (e) {
+                    console.error("Failed to parse saved state", e);
+                }
+            }
+        }
+
+        function setDifficulty(level) {
+            appState.difficulty = level;
+            document.querySelectorAll('.diff-btn').forEach(btn => {
+                btn.className = "diff-btn bg-slate-800 hover:bg-slate-700 border border-slate-700 py-3 rounded-xl text-sm font-bold transition";
+            });
+            const activeBtn = document.getElementById('btn' + level);
+            if (activeBtn) {
+                activeBtn.className = "diff-btn bg-blue-600 border border-blue-500 py-3 rounded-xl text-sm font-bold transition shadow-lg shadow-blue-600/20";
+            }
+            saveState();
+        }
+
         function switchView(viewName) {
-            ['viewTopic', 'viewLoading', 'viewPreview', 'viewQuiz', 'viewResults'].forEach(v => {
+            appState.view = viewName;
+            ['viewWelcome', 'viewLoading', 'viewQuiz', 'viewResults'].forEach(v => {
                 document.getElementById(v).classList.add('hidden');
             });
             document.getElementById(viewName).classList.remove('hidden');
+            saveState();
         }
 
-        function updateStepIndicator(text) {
-            document.getElementById('stepIndicator').innerText = text;
-        }
+        async function generateAndStartQuiz() {
+            switchView('viewLoading');
+            document.getElementById('loadingText').innerText = `Fetching 20 ${appState.difficulty} questions from the web...`;
 
-        // --- STEP 1: Wikipedia Scraper Engine ---
-        async function fetchWikipediaData(topic) {
             try {
-                // 1. Search for page title
-                const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&origin=*&format=json&list=search&srsearch=${encodeURIComponent(topic)}&srlimit=3`;
-                const searchRes = await fetch(searchUrl);
-                const searchData = await searchRes.json();
-                
-                if (!searchData.query.search.length) throw new Error("Topic not found on Wikipedia.");
-                
-                const mainTitle = searchData.query.search[0].title;
-                const secondTitle = searchData.query.search[1] ? searchData.query.search[1].title : null;
-
-                // 2. Fetch main page content and subtopic references
-                const contentUrl = `https://en.wikipedia.org/w/api.php?action=query&origin=*&format=json&prop=extracts|links&exintro=true&explaintext=true&titles=${encodeURIComponent(mainTitle)}${secondTitle ? '|' + encodeURIComponent(secondTitle) : ''}`;
-                const contentRes = await fetch(contentUrl);
-                const contentData = await contentRes.json();
-                
-                const pages = contentData.query.pages;
-                let combinedText = "";
-                let linksList = [];
-
-                for (let pageId in pages) {
-                    if (pages[pageId].extract) {
-                        combinedText += `--- Topic: ${pages[pageId].title} ---\n` + pages[pageId].extract + "\n\n";
-                    }
-                    if (pages[pageId].links) {
-                        // grab up to 15 sub-links for extra context flavor
-                        linksList.push(...pages[pageId].links.slice(0, 15).map(l => l.title));
-                    }
+                const quiz = await fetchQuestionsFromAPI(appState.difficulty);
+                if (!quiz || quiz.length === 0) {
+                    throw new Error("No questions came back. Please try again.");
                 }
 
-                return {
-                    combinedText,
-                    subtopics: [...new Set(linksList)].slice(0, 20).join(", ")
-                };
-            } catch (err) {
-                console.error(err);
-                throw err;
-            }
-        }
-
-        // --- GEMINI API HELPER ---
-        async function callGemini(promptText) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-            const response = await fetch(url, {
-                method: "POST",
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: promptText }] }],
-                    generationConfig: { responseMimeType: "application/json" }
-                })
-            });
-            const data = await response.json();
-            if (data.error) throw new Error(data.error.message);
-            return JSON.parse(data.candidates[0].content.parts[0].text);
-        }
-
-        // --- HANDLER: Fetch Preview & 5 Questions ---
-        async function handleFetchPreview() {
-            const topic = document.getElementById('topicInput').value.trim();
-            if (!topic) return alert("Please enter a valid topic.");
-
-            appState.topic = topic;
-            switchView('viewLoading');
-            updateStepIndicator('Scraping Wiki...');
-            document.getElementById('loadingText').innerText = `Crawling Wikipedia for "${topic}" and subtopics...`;
-
-            try {
-                const wikiData = await fetchWikipediaData(topic);
-                appState.wikiText = wikiData.combinedText;
-
-                document.getElementById('loadingText').innerText = `Analyzing content & generating 5 preview questions via AI...`;
-
-                const prompt = `Based on the following Wikipedia data for "${topic}" (and subtopics: ${wikiData.subtopics}), generate a JSON array of exactly 5 multiple choice questions. 
-                Progress them in difficulty: Question 1 must be very easy (Level 1), Question 2 easy (Level 2), Question 3 moderate (Level 3), Question 4 hard (Level 4), and Question 5 expert/niche (Level 5).
-                Return strict JSON format matching this schema:
-                [
-                  {
-                    "level": 1,
-                    "question": "...",
-                    "options": ["A", "B", "C", "D"],
-                    "correct": 0
-                  }
-                ]
-                Wiki Data: ${appState.wikiText.substring(0, 8000)}`;
-
-                appState.exampleQuestions = await callGemini(prompt);
-
-                // Populate UI
-                document.getElementById('wikiSummaryContainer').innerText = appState.wikiText.substring(0, 500) + "...";
-                
-                let listHtml = "";
-                appState.exampleQuestions.forEach(q => {
-                    listHtml += `
-                        <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl text-xs space-y-1">
-                            <span class="text-indigo-400 font-bold">Level ${q.level}:</span>
-                            <p class="font-medium text-slate-200">${q.question}</p>
-                        </div>
-                    `;
-                });
-                document.getElementById('exampleQuestionsList').innerHTML = listHtml;
-
-                switchView('viewPreview');
-                updateStepIndicator('Step 2: Choose Difficulty');
-            } catch (err) {
-                alert("Error: " + err.message);
-                switchView('viewTopic');
-            }
-        }
-
-        // --- HANDLER: Start Full 20-Question Quiz ---
-        async function handleStartFullQuiz() {
-            appState.selectedDifficulty = document.getElementById('difficultySelect').value;
-            switchView('viewLoading');
-            document.getElementById('loadingText').innerText = `Generating full 20-question quiz at tier: ${appState.selectedDifficulty}...`;
-
-            try {
-                const prompt = `Based on the Wikipedia context provided, generate a JSON array of exactly 20 multiple choice questions suited for difficulty: "${appState.selectedDifficulty}".
-                Return strict JSON format matching this schema:
-                [
-                  {
-                    "question": "...",
-                    "options": ["A", "B", "C", "D"],
-                    "correct": 0
-                  }
-                ]
-                Wiki Context: ${appState.wikiText.substring(0, 10000)}`;
-
-                appState.fullQuiz = await callGemini(prompt);
+                appState.questions = quiz;
                 appState.currentIndex = 0;
                 appState.score = 0;
 
                 switchView('viewQuiz');
-                updateStepIndicator('Step 3: Quiz Active');
-                renderQuizQuestion();
+                renderQuestion();
             } catch (err) {
-                alert("Error generating full quiz: " + err.message);
-                switchView('viewPreview');
+                const isBlockedByCSP = err instanceof TypeError;
+                const msg = isBlockedByCSP
+                    ? "Couldn't reach the trivia API. If you're viewing this inside an app's built-in preview pane, it may be sandboxing network requests — try downloading this HTML file and opening it directly in your browser instead. Otherwise, check your internet connection."
+                    : "Couldn't load questions from the internet: " + err.message + "\n\nPlease check your connection and try again.";
+                alert(msg);
+                switchView('viewWelcome');
             }
         }
 
-        // --- QUIZ GAMEPLAY LOGIC ---
-        function renderQuizQuestion() {
-            const q = appState.fullQuiz[appState.currentIndex];
-            document.getElementById('quizProgressText').innerText = `Question ${appState.currentIndex + 1} of ${appState.fullQuiz.length}`;
+        function renderQuestion() {
+            const q = appState.questions[appState.currentIndex];
+            document.getElementById('quizProgressText').innerText = `Question ${appState.currentIndex + 1} of ${appState.questions.length}`;
             document.getElementById('quizScoreText').innerText = `Score: ${appState.score}`;
             document.getElementById('questionTitle').innerText = q.question;
             document.getElementById('nextQuestionBtn').classList.add('hidden');
 
-            let optionsHtml = "";
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = "";
+
             q.options.forEach((opt, idx) => {
-                optionsHtml += `
-                    <button onclick="handleSelectOption(this, ${idx}, ${q.correct})" 
-                        class="option-btn w-full text-left bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl p-4 transition font-medium text-slate-200">
-                        ${opt}
-                    </button>
-                `;
+                const btn = document.createElement('button');
+                btn.className = "option-btn w-full text-left bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl p-4 transition font-medium text-slate-200";
+                btn.innerText = opt;
+                btn.addEventListener('click', () => handleOptionSelect(btn, idx, q.correctIndex));
+                optionsContainer.appendChild(btn);
             });
-            document.getElementById('optionsContainer').innerHTML = optionsHtml;
+            saveState();
         }
 
-        function handleSelectOption(btnElement, selectedIdx, correctIdx) {
+        function handleOptionSelect(btnElement, selectedIdx, correctIdx) {
             const buttons = document.querySelectorAll('.option-btn');
-            buttons.forEach(b => b.disabled = true); // Disable further clicks
+            buttons.forEach(b => b.disabled = true);
 
             if (selectedIdx === correctIdx) {
                 btnElement.classList.remove('bg-slate-800', 'border-slate-700');
@@ -317,25 +276,70 @@
             } else {
                 btnElement.classList.remove('bg-slate-800', 'border-slate-700');
                 btnElement.classList.add('bg-rose-900/50', 'border-rose-500', 'text-rose-200');
-                // Highlight correct option
                 buttons[correctIdx].classList.remove('bg-slate-800', 'border-slate-700');
                 buttons[correctIdx].classList.add('bg-emerald-900/50', 'border-emerald-500', 'text-emerald-200');
             }
 
             document.getElementById('quizScoreText').innerText = `Score: ${appState.score}`;
             document.getElementById('nextQuestionBtn').classList.remove('hidden');
+            saveState();
         }
 
         function handleNextQuestion() {
             appState.currentIndex++;
-            if (appState.currentIndex < appState.fullQuiz.length) {
-                renderQuizQuestion();
+            if (appState.currentIndex < appState.questions.length) {
+                renderQuestion();
             } else {
                 switchView('viewResults');
-                updateStepIndicator('Complete');
-                document.getElementById('finalScoreDisplay').innerText = `${appState.score} / ${appState.fullQuiz.length}`;
+                const finalScore = appState.score;
+                const total = appState.questions.length;
+                document.getElementById('finalScoreDisplay').innerText = `${finalScore} / ${total}`;
+
+                let verdict = "Great job completing the quiz!";
+                if (finalScore >= 17) verdict = "🌟 Outstanding! Exceptional score.";
+                else if (finalScore <= 10) verdict = "💡 Good effort! Try another round to improve.";
+                document.getElementById('performanceVerdict').innerText = verdict;
             }
+            saveState();
         }
+
+        // Initialize state on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            setDifficulty(appState.difficulty);
+
+            if (appState.view === 'viewQuiz' && appState.questions.length > 0) {
+                switchView('viewQuiz');
+                renderQuestion();
+            } else if (appState.view === 'viewResults' && appState.questions.length > 0) {
+                switchView('viewResults');
+                const finalScore = appState.score;
+                const total = appState.questions.length;
+                document.getElementById('finalScoreDisplay').innerText = `${finalScore} / ${total}`;
+
+                let verdict = "Great job completing the quiz!";
+                if (finalScore >= 17) verdict = "🌟 Outstanding! Exceptional score.";
+                else if (finalScore <= 10) verdict = "💡 Good effort! Try another round to improve.";
+                document.getElementById('performanceVerdict').innerText = verdict;
+            } else {
+                switchView('viewWelcome');
+            }
+        });
+
+        // Attach Event Listeners
+        document.getElementById('btnEasy').addEventListener('click', () => setDifficulty('Easy'));
+        document.getElementById('btnMedium').addEventListener('click', () => setDifficulty('Medium'));
+        document.getElementById('btnHard').addEventListener('click', () => setDifficulty('Hard'));
+        document.getElementById('startQuizBtn').addEventListener('click', generateAndStartQuiz);
+        document.getElementById('nextQuestionBtn').addEventListener('click', handleNextQuestion);
+        document.getElementById('restartQuizBtn').addEventListener('click', () => {
+            localStorage.removeItem('quizAppState');
+            generateAndStartQuiz();
+        });
+        document.getElementById('changeDiffBtn').addEventListener('click', () => {
+            localStorage.removeItem('quizAppState');
+            switchView('viewWelcome');
+        });
     </script>
 </body>
 </html>
