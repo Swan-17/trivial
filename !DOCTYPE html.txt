@@ -3,149 +3,339 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guess the Celebrity Game</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
-        }
-        .quiz-container {
-            text-align: center;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 300px;
-        }
-        h2 {
-            font-size: 24px;
-        }
-        .btn {
-            padding: 10px;
-            margin: 5px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        .btn:hover {
-            background-color: #45a049;
-        }
-        input[type="text"] {
-            padding: 8px;
-            width: 80%;
-            margin-top: 10px;
-            margin-bottom: 10px;
-        }
-        .question-container {
-            margin-bottom: 20px;
-        }
-        .hidden {
-            display: none;
-        }
-        #category-select {
-            margin-bottom: 20px;
-        }
-    </style>
+    <title>WikiVibe Quiz Generator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans">
 
-    <div class="quiz-container">
-        <div id="category-select">
-            <h3>Select a category:</h3>
-            <button class="btn" onclick="startQuiz('actors')">Actors</button>
-            <button class="btn" onclick="startQuiz('musicians')">Musicians</button>
-            <button class="btn" onclick="startQuiz('athletes')">Athletes</button>
+    <!-- Header -->
+    <header class="bg-slate-800 border-b border-slate-700 py-4 px-6 shadow-md">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+                🧠 WikiVibe Quiz Generator
+            </h1>
+            <span id="stepIndicator" class="text-xs uppercase tracking-wider bg-slate-700 text-slate-300 py-1 px-3 rounded-full font-semibold">
+                Step 1: Choose Topic
+            </span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-2xl w-full mx-auto p-6 flex-grow flex flex-col justify-center">
+
+        <!-- STEP 1: Enter Topic -->
+        <div id="viewTopic" class="space-y-6">
+            <div class="text-center space-y-2">
+                <h2 class="text-2xl font-bold">What do you want to learn about?</h2>
+                <p class="text-slate-400 text-sm">Enter any topic. We will scrape Wikipedia and its core subtopics to generate your custom path.</p>
+            </div>
+            <div class="space-y-4">
+                <input type="text" id="topicInput" placeholder="e.g., Quantum Computing, Ancient Rome, Jazz..." 
+                    class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
+                <button onclick="handleFetchPreview()" id="topicBtn"
+                    class="w-full bg-indigo-600 hover:bg-indigo-500 font-semibold py-3 rounded-xl transition shadow-lg shadow-indigo-600/30">
+                    Scrape & Generate Preview
+                </button>
+            </div>
         </div>
 
-        <div class="question-container">
-            <h2 id="question">Loading...</h2>
-            <input type="text" id="answer" placeholder="Your guess...">
+        <!-- LOADING SPINNER -->
+        <div id="viewLoading" class="hidden text-center space-y-4 py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
+            <p id="loadingText" class="text-slate-400 font-medium">Scraping Wikipedia pages and subtopics...</p>
         </div>
 
-        <button id="submit-btn" class="btn" onclick="checkAnswer()">Submit</button>
-        <button id="skip-btn" class="btn hidden" onclick="skipQuestion()">Skip Question</button>
-        <button id="reveal-btn" class="btn hidden" onclick="revealInitials()">Reveal Initials</button>
+        <!-- STEP 2: Difficulty Selection & 5 Example Questions Preview -->
+        <div id="viewPreview" class="hidden space-y-6">
+            <div class="space-y-1">
+                <h2 class="text-xl font-bold">Preview & Difficulty Level</h2>
+                <p class="text-slate-400 text-sm">Review these 5 progressive examples (Level 1 = Easiest, Level 5 = Hardest). Pick your tier for the full 20-question quiz.</p>
+            </div>
 
-        <div id="points" class="question-container">
-            <p>Points: <span id="score">0</span></p>
+            <!-- Context Box -->
+            <div class="bg-slate-800/50 border border-slate-700 p-4 rounded-xl text-xs text-slate-300 max-h-32 overflow-y-auto" id="wikiSummaryContainer">
+                <!-- Wiki summary injection -->
+            </div>
+
+            <!-- Example Questions List -->
+            <div id="exampleQuestionsList" class="space-y-3">
+                <!-- Dynamically injected example questions -->
+            </div>
+
+            <div class="space-y-3 pt-2">
+                <label class="block text-sm font-semibold text-slate-300">Select Your Quiz Difficulty Tier:</label>
+                <select id="difficultySelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-indigo-500">
+                    <option value="Beginner (Friendly & Fundamental)">Level 1-2: Beginner (Friendly & Fundamental)</option>
+                    <option value="Intermediate (Standard Trivia)" selected>Level 3: Intermediate (Standard Trivia)</option>
+                    <option value="Advanced / Expert (Niche & Deep Details)">Level 4-5: Advanced / Expert (Niche & Deep Details)</option>
+                </select>
+                <button onclick="handleStartFullQuiz()" 
+                    class="w-full bg-cyan-600 hover:bg-cyan-500 font-semibold py-3 rounded-xl transition shadow-lg shadow-cyan-600/30">
+                    Generate Full 20-Question Quiz 🚀
+                </button>
+            </div>
         </div>
-    </div>
 
+        <!-- STEP 3: Taking the Quiz -->
+        <div id="viewQuiz" class="hidden space-y-6">
+            <div class="flex justify-between items-center text-sm text-slate-400 border-b border-slate-800 pb-3">
+                <span id="quizProgressText">Question 1 of 20</span>
+                <span id="quizScoreText" class="text-indigo-400 font-semibold">Score: 0</span>
+            </div>
+
+            <div class="space-y-4">
+                <h3 id="questionTitle" class="text-lg font-bold text-slate-100">Question goes here?</h3>
+                <div id="optionsContainer" class="space-y-3">
+                    <!-- Options injected here -->
+                </div>
+            </div>
+
+            <button id="nextQuestionBtn" onclick="handleNextQuestion()" class="hidden w-full bg-indigo-600 hover:bg-indigo-500 font-semibold py-3 rounded-xl transition">
+                Next Question
+            </button>
+        </div>
+
+        <!-- STEP 4: Results View -->
+        <div id="viewResults" class="hidden text-center space-y-6">
+            <div class="space-y-2">
+                <h2 class="text-3xl font-bold">Quiz Complete! 🎉</h2>
+                <p class="text-slate-400">Here is how you performed on your custom Wikipedia crawl.</p>
+            </div>
+            <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl max-w-xs mx-auto">
+                <span class="text-xs uppercase tracking-wider text-slate-400 block mb-1">Final Score</span>
+                <span id="finalScoreDisplay" class="text-4xl font-extrabold text-indigo-400">0 / 20</span>
+            </div>
+            <button onclick="location.reload()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 font-semibold py-3 rounded-xl transition">
+                Start New Topic
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 text-xs text-slate-500 border-t border-slate-800">
+        Powered by Wikipedia API & Gemini AI
+    </footer>
+
+    <!-- App Logic Script -->
     <script>
-        let celebrity = {};
-        let currentQuestionIndex = 0;
-        let score = 0;
-        let answeredCorrectly = false;
+        // ⚠️ HARDCODED API KEY (Replace or keep short-term as discussed)
+        const GEMINI_API_KEY = AQ.Ab8RN6KnQJrm9a5foD_wJDHBcJNMDKmuuHkujeXuLRzbSve3Rw; 
+        
+        let appState = {
+            topic: "",
+            wikiText: "",
+            exampleQuestions: [],
+            fullQuiz: [],
+            currentIndex: 0,
+            score: 0,
+            selectedDifficulty: ""
+        };
 
-        async function fetchCelebrity(category) {
-            // Simulate an API call to fetch a celebrity and questions based on category
-            // In a real-world scenario, replace this with a real API call
-            const response = await fetch(`https://api.example.com/celebrity?category=${category}`);
+        function switchView(viewName) {
+            ['viewTopic', 'viewLoading', 'viewPreview', 'viewQuiz', 'viewResults'].forEach(v => {
+                document.getElementById(v).classList.add('hidden');
+            });
+            document.getElementById(viewName).classList.remove('hidden');
+        }
+
+        function updateStepIndicator(text) {
+            document.getElementById('stepIndicator').innerText = text;
+        }
+
+        // --- STEP 1: Wikipedia Scraper Engine ---
+        async function fetchWikipediaData(topic) {
+            try {
+                // 1. Search for page title
+                const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&origin=*&format=json&list=search&srsearch=${encodeURIComponent(topic)}&srlimit=3`;
+                const searchRes = await fetch(searchUrl);
+                const searchData = await searchRes.json();
+                
+                if (!searchData.query.search.length) throw new Error("Topic not found on Wikipedia.");
+                
+                const mainTitle = searchData.query.search[0].title;
+                const secondTitle = searchData.query.search[1] ? searchData.query.search[1].title : null;
+
+                // 2. Fetch main page content and subtopic references
+                const contentUrl = `https://en.wikipedia.org/w/api.php?action=query&origin=*&format=json&prop=extracts|links&exintro=true&explaintext=true&titles=${encodeURIComponent(mainTitle)}${secondTitle ? '|' + encodeURIComponent(secondTitle) : ''}`;
+                const contentRes = await fetch(contentUrl);
+                const contentData = await contentRes.json();
+                
+                const pages = contentData.query.pages;
+                let combinedText = "";
+                let linksList = [];
+
+                for (let pageId in pages) {
+                    if (pages[pageId].extract) {
+                        combinedText += `--- Topic: ${pages[pageId].title} ---\n` + pages[pageId].extract + "\n\n";
+                    }
+                    if (pages[pageId].links) {
+                        // grab up to 15 sub-links for extra context flavor
+                        linksList.push(...pages[pageId].links.slice(0, 15).map(l => l.title));
+                    }
+                }
+
+                return {
+                    combinedText,
+                    subtopics: [...new Set(linksList)].slice(0, 20).join(", ")
+                };
+            } catch (err) {
+                console.error(err);
+                throw err;
+            }
+        }
+
+        // --- GEMINI API HELPER ---
+        async function callGemini(promptText) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+            const response = await fetch(url, {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: promptText }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                })
+            });
             const data = await response.json();
-            return data;
+            if (data.error) throw new Error(data.error.message);
+            return JSON.parse(data.candidates[0].content.parts[0].text);
         }
 
-        async function startQuiz(category) {
-            document.getElementById('category-select').classList.add('hidden');
-            celebrity = await fetchCelebrity(category);
-            currentQuestionIndex = 0;
-            score = 0;
-            document.getElementById("score").textContent = score;
-            loadQuestion();
-        }
+        // --- HANDLER: Fetch Preview & 5 Questions ---
+        async function handleFetchPreview() {
+            const topic = document.getElementById('topicInput').value.trim();
+            if (!topic) return alert("Please enter a valid topic.");
 
-        function loadQuestion() {
-            // Reset state for each question
-            answeredCorrectly = false;
-            document.getElementById("answer").value = '';
-            document.getElementById("submit-btn").disabled = false;
+            appState.topic = topic;
+            switchView('viewLoading');
+            updateStepIndicator('Scraping Wiki...');
+            document.getElementById('loadingText').innerText = `Crawling Wikipedia for "${topic}" and subtopics...`;
 
-            if (currentQuestionIndex < celebrity.questions.length) {
-                document.getElementById("question").textContent = celebrity.questions[currentQuestionIndex].question;
-                document.getElementById("skip-btn").classList.remove("hidden");
-                document.getElementById("reveal-btn").classList.add("hidden");
+            try {
+                const wikiData = await fetchWikipediaData(topic);
+                appState.wikiText = wikiData.combinedText;
+
+                document.getElementById('loadingText').innerText = `Analyzing content & generating 5 preview questions via AI...`;
+
+                const prompt = `Based on the following Wikipedia data for "${topic}" (and subtopics: ${wikiData.subtopics}), generate a JSON array of exactly 5 multiple choice questions. 
+                Progress them in difficulty: Question 1 must be very easy (Level 1), Question 2 easy (Level 2), Question 3 moderate (Level 3), Question 4 hard (Level 4), and Question 5 expert/niche (Level 5).
+                Return strict JSON format matching this schema:
+                [
+                  {
+                    "level": 1,
+                    "question": "...",
+                    "options": ["A", "B", "C", "D"],
+                    "correct": 0
+                  }
+                ]
+                Wiki Data: ${appState.wikiText.substring(0, 8000)}`;
+
+                appState.exampleQuestions = await callGemini(prompt);
+
+                // Populate UI
+                document.getElementById('wikiSummaryContainer').innerText = appState.wikiText.substring(0, 500) + "...";
+                
+                let listHtml = "";
+                appState.exampleQuestions.forEach(q => {
+                    listHtml += `
+                        <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl text-xs space-y-1">
+                            <span class="text-indigo-400 font-bold">Level ${q.level}:</span>
+                            <p class="font-medium text-slate-200">${q.question}</p>
+                        </div>
+                    `;
+                });
+                document.getElementById('exampleQuestionsList').innerHTML = listHtml;
+
+                switchView('viewPreview');
+                updateStepIndicator('Step 2: Choose Difficulty');
+            } catch (err) {
+                alert("Error: " + err.message);
+                switchView('viewTopic');
             }
         }
 
-        function checkAnswer() {
-            const userAnswer = document.getElementById("answer").value.trim().toLowerCase();
-            const correctAnswer = celebrity.questions[currentQuestionIndex].answer.toLowerCase();
+        // --- HANDLER: Start Full 20-Question Quiz ---
+        async function handleStartFullQuiz() {
+            appState.selectedDifficulty = document.getElementById('difficultySelect').value;
+            switchView('viewLoading');
+            document.getElementById('loadingText').innerText = `Generating full 20-question quiz at tier: ${appState.selectedDifficulty}...`;
 
-            if (userAnswer === correctAnswer) {
-                score += (5 - currentQuestionIndex) * 10; // Points based on question number
-                document.getElementById("score").textContent = score;
-                answeredCorrectly = true;
-                alert('Correct!');
+            try {
+                const prompt = `Based on the Wikipedia context provided, generate a JSON array of exactly 20 multiple choice questions suited for difficulty: "${appState.selectedDifficulty}".
+                Return strict JSON format matching this schema:
+                [
+                  {
+                    "question": "...",
+                    "options": ["A", "B", "C", "D"],
+                    "correct": 0
+                  }
+                ]
+                Wiki Context: ${appState.wikiText.substring(0, 10000)}`;
+
+                appState.fullQuiz = await callGemini(prompt);
+                appState.currentIndex = 0;
+                appState.score = 0;
+
+                switchView('viewQuiz');
+                updateStepIndicator('Step 3: Quiz Active');
+                renderQuizQuestion();
+            } catch (err) {
+                alert("Error generating full quiz: " + err.message);
+                switchView('viewPreview');
+            }
+        }
+
+        // --- QUIZ GAMEPLAY LOGIC ---
+        function renderQuizQuestion() {
+            const q = appState.fullQuiz[appState.currentIndex];
+            document.getElementById('quizProgressText').innerText = `Question ${appState.currentIndex + 1} of ${appState.fullQuiz.length}`;
+            document.getElementById('quizScoreText').innerText = `Score: ${appState.score}`;
+            document.getElementById('questionTitle').innerText = q.question;
+            document.getElementById('nextQuestionBtn').classList.add('hidden');
+
+            let optionsHtml = "";
+            q.options.forEach((opt, idx) => {
+                optionsHtml += `
+                    <button onclick="handleSelectOption(this, ${idx}, ${q.correct})" 
+                        class="option-btn w-full text-left bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl p-4 transition font-medium text-slate-200">
+                        ${opt}
+                    </button>
+                `;
+            });
+            document.getElementById('optionsContainer').innerHTML = optionsHtml;
+        }
+
+        function handleSelectOption(btnElement, selectedIdx, correctIdx) {
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(b => b.disabled = true); // Disable further clicks
+
+            if (selectedIdx === correctIdx) {
+                btnElement.classList.remove('bg-slate-800', 'border-slate-700');
+                btnElement.classList.add('bg-emerald-900/50', 'border-emerald-500', 'text-emerald-200');
+                appState.score++;
             } else {
-                alert('Incorrect! Try the next question.');
+                btnElement.classList.remove('bg-slate-800', 'border-slate-700');
+                btnElement.classList.add('bg-rose-900/50', 'border-rose-500', 'text-rose-200');
+                // Highlight correct option
+                buttons[correctIdx].classList.remove('bg-slate-800', 'border-slate-700');
+                buttons[correctIdx].classList.add('bg-emerald-900/50', 'border-emerald-500', 'text-emerald-200');
             }
-            currentQuestionIndex++;
-            if (currentQuestionIndex >= celebrity.questions.length) {
-                document.getElementById("reveal-btn").classList.remove("hidden");
-                document.getElementById("skip-btn").classList.add("hidden");
-            }
-            loadQuestion();
+
+            document.getElementById('quizScoreText').innerText = `Score: ${appState.score}`;
+            document.getElementById('nextQuestionBtn').classList.remove('hidden');
         }
 
-        function skipQuestion() {
-            if (currentQuestionIndex < celebrity.questions.length) {
-                currentQuestionIndex++;
-                loadQuestion();
+        function handleNextQuestion() {
+            appState.currentIndex++;
+            if (appState.currentIndex < appState.fullQuiz.length) {
+                renderQuizQuestion();
+            } else {
+                switchView('viewResults');
+                updateStepIndicator('Complete');
+                document.getElementById('finalScoreDisplay').innerText = `${appState.score} / ${appState.fullQuiz.length}`;
             }
-        }
-
-        function revealInitials() {
-            alert("The celebrity's initials are: " + celebrity.initials);
         }
     </script>
-
 </body>
 </html>
