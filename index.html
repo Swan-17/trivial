@@ -27,14 +27,14 @@
         <!-- WELCOME / CONFIG VIEW -->
         <div id="viewWelcome" class="space-y-6">
             <div class="text-center space-y-2">
-                <h2 class="text-3xl font-extrabold">General Knowledge Quiz</h2>
-                <p class="text-slate-400 text-sm">Select your difficulty and play a fresh 20-question quiz pulled live from the internet — no API key needed.</p>
+                <h2 class="text-3xl font-extrabold">Knowledge & Culture Quiz</h2>
+                <p class="text-slate-400 text-sm">Select your difficulty and play a fresh 20-question quiz covering science, history, geography, and literature — pulled live from the web, no API key needed.</p>
             </div>
 
             <div class="space-y-4 w-full">
                 <!-- Difficulty Selection -->
                 <div class="space-y-2">
-                    <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold">Select Difficulty</label>
+                    <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold">Select Difficulty & Challenge Level</label>
                     <div class="grid grid-cols-3 gap-2">
                         <button id="btnEasy" class="diff-btn bg-slate-800 hover:bg-slate-700 border border-slate-700 py-3 rounded-xl text-sm font-bold transition" data-level="Easy">Easy</button>
                         <button id="btnMedium" class="diff-btn bg-blue-600 border border-blue-500 py-3 rounded-xl text-sm font-bold transition shadow-lg shadow-blue-600/20" data-level="Medium">Medium</button>
@@ -102,10 +102,11 @@
 
     <!-- App Logic Script -->
     <script>
+        // Difficulty configuration with distinct categories (excluding gaming & anime) and scaling difficulty
         const DIFFICULTY_CONFIG = {
-            Easy:   { otdbDifficulty: 'easy',   categories: null },
-            Medium: { otdbDifficulty: 'medium', categories: null },
-            Hard:   { otdbDifficulty: 'hard',   categories: null }
+            Easy:   { otdbDifficulty: 'easy',   categories: [9, 22, 27] },             // General Knowledge, Geography, Animals (Accessible)
+            Medium: { otdbDifficulty: 'medium', categories: [10, 11, 12, 17, 21, 23] }, // Books, Film, Music, Science, Sports, History (Standard)
+            Hard:   { otdbDifficulty: 'hard',   categories: [18, 19, 20, 24, 25] }     // Computer Science, Mathematics, Mythology, Politics, Art (Rigorous)
         };
 
         function decodeHtmlEntities(str) {
@@ -129,7 +130,7 @@
 
         async function fetchQuestionsFromAPI(level, attempt = 1) {
             const config = DIFFICULTY_CONFIG[level] || DIFFICULTY_CONFIG.Medium;
-            const category = config.categories
+            const category = config.categories && config.categories.length > 0
                 ? config.categories[Math.floor(Math.random() * config.categories.length)]
                 : null;
 
