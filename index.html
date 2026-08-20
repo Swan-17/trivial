@@ -333,7 +333,7 @@
     <!-- SCREEN 2: MASTER ASSIGNMENT DASHBOARD -->
     <div id="screen-assignments" class="screen">
         <h2>Strategy Dashboard</h2>
-        <p style="text-align: center; color: var(--text-muted); margin-bottom: 25px;">Assign your Main Player for each round and select <strong>ONE Joker round</strong> per team for double points!</p>
+        <p style="text-align: center; color: var(--text-muted); margin-bottom: 25px;">Assign your Main Player for each round across the board.</p>
         
         <div class="flex-row">
             <!-- Team A Board -->
@@ -361,7 +361,6 @@
         <div class="live-stats">
             <div><strong>Current Turn:</strong> <span id="stat-active-team" style="color: var(--accent); font-weight: 700;">Team A</span></div>
             <div><strong>Main Player:</strong> <span id="stat-rep-name" style="color: var(--success); font-weight: 700;">Player</span></div>
-            <div><strong>Joker Status:</strong> <span id="stat-joker-status">Normal</span></div>
         </div>
 
         <div class="timer-display" id="timer">00:00</div>
@@ -409,7 +408,6 @@
 </div>
 
 <script>
-    // Refreshed local dataset split into team pools for an entirely new game experience
     const masterGameData = {
         trivia: [
             // Team A Pool
@@ -496,8 +494,8 @@
     ];
 
     let gameState = {
-        teamA: { name: "Team A", players: [], score: 0, assignments: [], jokerRound: 0 },
-        teamB: { name: "Team B", players: [], score: 0, assignments: [], jokerRound: 0 },
+        teamA: { name: "Team A", players: [], score: 0, assignments: [] },
+        teamB: { name: "Team B", players: [], score: 0, assignments: [] },
         currentRoundIndex: 0,
         currentTeamTurn: 'A',
         timerInterval: null,
@@ -568,9 +566,6 @@
                 <select id="assign-${teamPrefix}-player-${roundIdx}">
                     ${playerOptions}
                 </select>
-                <label style="display: block; margin-top: 8px; font-weight: 500;">
-                    <input type="radio" name="joker-${teamPrefix}" value="${roundIdx}" ${roundIdx === 0 ? 'checked' : ''}> Play Joker Here (2x Pts)
-                </label>
             </div>
         `;
     }
@@ -579,14 +574,9 @@
         for(let i=0; i<roundsConfig.length; i++) {
             gameState.teamA.assignments.push(document.getElementById(`assign-A-player-${i}`).value);
         }
-        let jokerRadioA = document.querySelector('input[name="joker-A"]:checked');
-        gameState.teamA.jokerRound = jokerRadioA ? parseInt(jokerRadioA.value) : 0;
-
         for(let i=0; i<roundsConfig.length; i++) {
             gameState.teamB.assignments.push(document.getElementById(`assign-B-player-${i}`).value);
         }
-        let jokerRadioB = document.querySelector('input[name="joker-B"]:checked');
-        gameState.teamB.jokerRound = jokerRadioB ? parseInt(jokerRadioB.value) : 0;
 
         gameState.currentRoundIndex = 0;
         gameState.currentTeamTurn = 'A';
@@ -631,21 +621,9 @@
         let activeRep = gameState.currentTeamTurn === 'A' 
             ? gameState.teamA.assignments[gameState.currentRoundIndex] 
             : gameState.teamB.assignments[gameState.currentRoundIndex];
-        
-        let isJokerRound = (gameState.currentTeamTurn === 'A' && gameState.currentRoundIndex === gameState.teamA.jokerRound) ||
-                           (gameState.currentTeamTurn === 'B' && gameState.currentRoundIndex === gameState.teamB.jokerRound);
 
         document.getElementById('stat-active-team').innerText = activeTeamName;
         document.getElementById('stat-rep-name').innerText = activeRep;
-        
-        let jokerStatusElem = document.getElementById('stat-joker-status');
-        if(isJokerRound) {
-            jokerStatusElem.innerText = "🃏 ACTIVE (Double Points!)";
-            jokerStatusElem.style.color = "var(--accent)";
-        } else {
-            jokerStatusElem.innerText = "Standard Round";
-            jokerStatusElem.style.color = "var(--text-muted)";
-        }
 
         gameState.turnPoints = 0;
         gameState.rawWordCount = 0;
@@ -663,7 +641,6 @@
                 `Keyboard Shortcuts: <kbd>ENTER</kbd> = Correct (+1 pt & Next) &nbsp;|&nbsp; <kbd>SPACEBAR</kbd> = Skip (No Point & Next)`;
         }
 
-        // Pull unique list for Team A (pool index 0) or Team B (pool index 1)
         let poolIndex = gameState.currentTeamTurn === 'A' ? 0 : 1;
         gameState.currentPromptsList = [...masterGameData[round.type][poolIndex]].sort(() => Math.random() - 0.5);
         gameState.currentItemIndex = 0;
@@ -731,7 +708,6 @@
         alert(message);
     }
 
-    // Keyboard controls handler
     document.addEventListener('keydown', function(event) {
         if(!document.getElementById('screen-play').classList.contains('active')) return;
         if(!gameState.isTimerRunning || gameState.isTurnFinished) return;
@@ -763,14 +739,6 @@
         gameState.isTurnFinished = true;
 
         let finalTurnPts = gameState.turnPoints;
-
-        let isJoker = (gameState.currentTeamTurn === 'A' && gameState.currentRoundIndex === gameState.teamA.jokerRound) ||
-                      (gameState.currentTeamTurn === 'B' && gameState.currentRoundIndex === gameState.teamB.jokerRound);
-        
-        if(isJoker) {
-            finalTurnPts *= 2;
-            alert(`🃏 Joker activated! Points doubled for this turn!`);
-        }
 
         if(gameState.currentTeamTurn === 'A') {
             gameState.teamA.score += finalTurnPts;
