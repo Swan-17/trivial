@@ -3,344 +3,807 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz Generator (Live Trivia)</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>The Ultimate Family Showcase</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #090d16;
+            --bg-card: rgba(30, 41, 59, 0.75);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --accent: #f59e0b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top, #1e1b4b, var(--bg-base));
+            color: var(--text);
+            margin: 0;
+            padding: 30px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            padding: 40px;
+            box-sizing: border-box;
+            position: relative;
+            height: fit-content;
+        }
+
+        h1, h2, h3 {
+            color: var(--text);
+            text-align: center;
+            margin-top: 0;
+        }
+
+        h1 {
+            color: var(--accent);
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 25px;
+            text-shadow: 0 2px 10px rgba(245, 158, 11, 0.3);
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 14px;
+            margin-bottom: 30px;
+        }
+
+        .team-score {
+            text-align: center;
+        }
+
+        .team-score h3 {
+            margin: 0 0 5px 0;
+            color: var(--accent);
+            font-size: 1.1rem;
+        }
+
+        .team-score span {
+            font-size: 2.5rem;
+            font-weight: 800;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-block;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.6);
+        }
+
+        .btn-accent {
+            background-color: var(--accent);
+            color: #000;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-accent:hover {
+            background-color: #d97706;
+            box-shadow: 0 6px 16px rgba(245, 158, 11, 0.6);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            margin: 8px 0 18px 0;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: rgba(15, 23, 42, 0.8);
+            color: var(--text);
+            box-sizing: border-box;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+        }
+
+        label {
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            display: block;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .timer-display {
+            font-size: 3.5rem;
+            text-align: center;
+            font-weight: 800;
+            color: var(--accent);
+            margin: 15px 0;
+            letter-spacing: 2px;
+        }
+
+        .game-box {
+            background: rgba(15, 23, 42, 0.5);
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            padding: 30px;
+            border-radius: 14px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .prompt-text {
+            font-size: 2.2rem;
+            color: var(--success);
+            font-weight: 700;
+            margin: 25px 0;
+            min-height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 15px;
+            word-break: break-word;
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .flex-col {
+            flex: 1;
+        }
+
+        .assignment-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .assignment-card {
+            background: rgba(15, 23, 42, 0.6);
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .assignment-card h4 {
+            margin-top: 0;
+            margin-bottom: 4px;
+            color: var(--accent);
+            font-size: 1.1rem;
+        }
+
+        .assignment-card p {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin: 0 0 12px 0;
+            line-height: 1.3;
+        }
+
+        .live-stats {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        kbd {
+            background: #334155;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-family: monospace;
+            border-bottom: 2px solid #1e293b;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+        .modal-card {
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            padding: 40px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.7);
+        }
+        .modal-card h2 {
+            color: var(--accent);
+            font-size: 2rem;
+            margin-top: 0;
+        }
+    </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans">
+<body>
 
-    <!-- Header -->
-    <header class="bg-slate-800 border-b border-slate-700 py-4 px-6 shadow-md">
-        <div class="max-w-3xl mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                ✨ Quiz Generator
-            </h1>
-            <span class="text-xs uppercase tracking-wider bg-slate-700 text-slate-300 py-1 px-3 rounded-full font-semibold">
-                Infinite Practice
-            </span>
+<!-- ROUND TRANSITION MODAL -->
+<div id="round-modal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;" id="modal-team-heading">Team A Turn</h3>
+        <h2 id="modal-round-title">Round Title</h2>
+        <p id="modal-rep-text" style="font-size: 1.2rem; color: var(--success); margin: 20px 0;">Main Player: Name</p>
+        <button class="btn btn-accent" onclick="closeModalAndReady()">Ready to Play! 🎬</button>
+    </div>
+</div>
+
+<div class="container">
+    <h1>The Ultimate Family Showcase</h1>
+    
+    <!-- Persistent Scoreboard -->
+    <div id="global-scoreboard" class="scoreboard" style="display: none;">
+        <div class="team-score">
+            <h3 id="display-team-a-name">Team A</h3>
+            <span id="display-team-a-score">0</span> pts
         </div>
-    </header>
+        <div class="team-score">
+            <h3 id="display-team-b-name">Team B</h3>
+            <span id="display-team-b-score">0</span> pts
+        </div>
+    </div>
 
-    <!-- Main Container -->
-    <main class="max-w-xl w-full mx-auto p-6 flex-grow flex flex-col justify-center">
-
-        <!-- WELCOME / CONFIG VIEW -->
-        <div id="viewWelcome" class="space-y-6">
-            <div class="text-center space-y-2">
-                <h2 class="text-3xl font-extrabold">Knowledge & Culture Quiz</h2>
-                <p class="text-slate-400 text-sm">Select your difficulty and play a fresh 20-question quiz covering science, history, geography, and literature — pulled live from the web, no API key needed.</p>
+    <!-- SCREEN 1: SETUP -->
+    <div id="screen-setup" class="screen active">
+        <h2>Game Setup</h2>
+        <p style="text-align: center; color: var(--text-muted); margin-bottom: 30px;">Enter your team names and rosters to configure the laptop dashboard.</p>
+        
+        <div class="flex-row">
+            <div class="flex-col" style="background: rgba(15,23,42,0.4); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <label>Team A Name</label>
+                <input type="text" id="setup-team-a" value="The Legends">
+                <label>Team A Player 1</label>
+                <input type="text" id="a-player-1" value="Grandpa Joe">
+                <label>Team A Player 2</label>
+                <input type="text" id="a-player-2" value="Sarah">
+                <label>Team A Player 3</label>
+                <input type="text" id="a-player-3" value="Leo">
             </div>
-
-            <div class="space-y-4 w-full">
-                <!-- Difficulty Selection -->
-                <div class="space-y-2">
-                    <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold">Select Difficulty & Challenge Level</label>
-                    <div class="grid grid-cols-3 gap-2">
-                        <button id="btnEasy" class="diff-btn bg-slate-800 hover:bg-slate-700 border border-slate-700 py-3 rounded-xl text-sm font-bold transition" data-level="Easy">Easy</button>
-                        <button id="btnMedium" class="diff-btn bg-blue-600 border border-blue-500 py-3 rounded-xl text-sm font-bold transition shadow-lg shadow-blue-600/20" data-level="Medium">Medium</button>
-                        <button id="btnHard" class="diff-btn bg-slate-800 hover:bg-slate-700 border border-slate-700 py-3 rounded-xl text-sm font-bold transition" data-level="Hard">Hard</button>
-                    </div>
-                </div>
-
-                <button id="startQuizBtn"
-                    class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold py-4 rounded-xl transition shadow-lg shadow-blue-600/30 text-base">
-                    Start New Quiz 🚀
-                </button>
+            <div class="flex-col" style="background: rgba(15,23,42,0.4); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <label>Team B Name</label>
+                <input type="text" id="setup-team-b" value="The Dynamos">
+                <label>Team B Player 1</label>
+                <input type="text" id="b-player-1" value="Grandma Mary">
+                <label>Team B Player 2</label>
+                <input type="text" id="b-player-2" value="David">
+                <label>Team B Player 3</label>
+                <input type="text" id="b-player-3" value="Chloe">
             </div>
         </div>
-
-        <!-- LOADING VIEW -->
-        <div id="viewLoading" class="hidden text-center space-y-4 py-12">
-            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-            <p id="loadingText" class="text-slate-400 font-medium">Shuffling your fresh 20-question quiz...</p>
+        
+        <div style="text-align: center; margin-top: 35px;">
+            <button class="btn btn-accent" onclick="submitSetup()">Continue to Strategy & Roles 📝</button>
         </div>
+    </div>
 
-        <!-- QUIZ VIEW -->
-        <div id="viewQuiz" class="hidden space-y-6">
-            <div class="flex justify-between items-center text-sm text-slate-400 border-b border-slate-800 pb-3">
-                <span id="quizProgressText">Question 1 of 20</span>
-                <span id="quizScoreText" class="text-blue-400 font-semibold">Score: 0</span>
+    <!-- SCREEN 2: MASTER ASSIGNMENT DASHBOARD -->
+    <div id="screen-assignments" class="screen">
+        <h2>Strategy Dashboard</h2>
+        <p style="text-align: center; color: var(--text-muted); margin-bottom: 25px;">Assign your Main Player for each round and select <strong>ONE Joker round</strong> per team for double points!</p>
+        
+        <div class="flex-row">
+            <!-- Team A Board -->
+            <div class="flex-col">
+                <h3 id="dash-heading-a" style="color: var(--accent); margin-bottom: 10px;">Team A</h3>
+                <div id="team-a-assignments" class="assignment-grid"></div>
             </div>
-
-            <div class="space-y-4">
-                <h3 id="questionTitle" class="text-lg font-bold text-slate-100">Question goes here?</h3>
-                <div id="optionsContainer" class="space-y-3"></div>
-            </div>
-
-            <button id="nextQuestionBtn" class="hidden w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 font-semibold py-3 rounded-xl transition">
-                Next Question ➔
-            </button>
-        </div>
-
-        <!-- RESULTS VIEW -->
-        <div id="viewResults" class="hidden text-center space-y-6">
-            <div class="space-y-2">
-                <h2 class="text-3xl font-bold">Quiz Complete! 🎉</h2>
-                <p class="text-slate-400">Want to try another batch?</p>
-            </div>
-            <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl max-w-xs mx-auto space-y-2">
-                <span class="text-xs uppercase tracking-wider text-slate-400 block">Final Score</span>
-                <span id="finalScoreDisplay" class="text-4xl font-extrabold text-blue-400">0 / 20</span>
-                <p id="performanceVerdict" class="text-xs text-slate-300 font-medium pt-1"></p>
-            </div>
-            <div class="space-y-3 w-full max-w-xs mx-auto">
-                <button id="restartQuizBtn" class="w-full bg-blue-600 hover:bg-blue-500 font-semibold py-3.5 rounded-xl transition shadow-lg shadow-blue-600/30">
-                    Generate Another Quiz ⚡
-                </button>
-                <button id="changeDiffBtn" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 font-semibold py-3 rounded-xl transition">
-                    Change Difficulty
-                </button>
+            <!-- Team B Board -->
+            <div class="flex-col">
+                <h3 id="dash-heading-b" style="color: var(--accent); margin-bottom: 10px;">Team B</h3>
+                <div id="team-b-assignments" class="assignment-grid"></div>
             </div>
         </div>
 
-    </main>
+        <div style="text-align: center; margin-top: 35px;">
+            <button class="btn btn-accent" onclick="lockAssignments()">Lock In Roles & Start Game Night! 🚀</button>
+        </div>
+    </div>
 
-    <!-- Footer -->
-    <footer class="text-center py-4 text-xs text-slate-500 border-t border-slate-800">
-        Quiz Generator • Live questions from the Open Trivia Database, no API key required
-    </footer>
+    <!-- SCREEN 3: ACTIVE ROUND PLAY -->
+    <div id="screen-play" class="screen">
+        <h2 id="play-title" style="margin-bottom: 5px;">Active Round</h2>
+        <p id="play-instructions" style="text-align: center; color: var(--text-muted); margin-top: 0; margin-bottom: 20px;"></p>
+        
+        <div class="live-stats">
+            <div><strong>Current Turn:</strong> <span id="stat-active-team" style="color: var(--accent); font-weight: 700;">Team A</span></div>
+            <div><strong>Main Player:</strong> <span id="stat-rep-name" style="color: var(--success); font-weight: 700;">Player</span></div>
+            <div><strong>Joker Status:</strong> <span id="stat-joker-status">Normal</span></div>
+        </div>
 
-    <!-- App Logic Script -->
-    <script>
-        // Difficulty configuration with distinct categories (excluding gaming & anime) and scaling difficulty
-        const DIFFICULTY_CONFIG = {
-            Easy:   { otdbDifficulty: 'easy',   categories: [9, 22, 27] },             // General Knowledge, Geography, Animals (Accessible)
-            Medium: { otdbDifficulty: 'medium', categories: [10, 11, 12, 17, 21, 23] }, // Books, Film, Music, Science, Sports, History (Standard)
-            Hard:   { otdbDifficulty: 'hard',   categories: [18, 19, 20, 24, 25] }     // Computer Science, Mathematics, Mythology, Politics, Art (Rigorous)
-        };
+        <div class="timer-display" id="timer">00:00</div>
+        
+        <div class="game-box">
+            <div class="prompt-text" id="play-prompt">Press 'Start Turn' to reveal first cue</div>
+            <div>
+                <button class="btn btn-accent" id="start-turn-btn" onclick="startTurnTimer()">Start Turn & First Cue ▶️</button>
+            </div>
+        </div>
 
-        function decodeHtmlEntities(str) {
-            const txt = document.createElement('textarea');
-            txt.innerHTML = str;
-            return txt.value;
+        <!-- Live Score Feedback & Controls -->
+        <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); padding: 20px; border-radius: 12px; text-align: center;">
+            <div id="score-tracking-container" style="font-size: 1.2rem; margin-bottom: 10px;">
+                Turn Score: <span id="current-turn-pts" style="font-size: 1.8rem; font-weight: 800; color: var(--success);">0</span> points
+            </div>
+            <p id="controls-hint" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">
+                Keyboard Shortcuts: <kbd>ENTER</kbd> = Correct (+1 pt & Next) &nbsp;|&nbsp; <kbd>SPACEBAR</kbd> = Skip (No Point & Next)
+            </p>
+            <div>
+                <button class="btn" id="finish-turn-btn" onclick="completeTurn()" style="display: none;">Finish Turn & Lock Score 🔒</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 4: GAME OVER -->
+    <div id="screen-gameover" class="screen" style="text-align: center;">
+        <h2>🎉 Game Night Complete! 🎉</h2>
+        <h1 id="winner-announcement" style="color: var(--success); font-size: 2.8rem; margin: 20px 0;">Winner: Team A</h1>
+        <div class="scoreboard" style="margin-top: 30px; max-width: 600px; margin-left: auto; margin-right: auto;">
+            <div class="team-score">
+                <h3 id="final-team-a-name">Team A</h3>
+                <span id="final-team-a-score">0</span> pts
+            </div>
+            <div class="team-score">
+                <h3 id="final-team-b-name">Team B</h3>
+                <span id="final-team-b-score">0</span> pts
+            </div>
+        </div>
+        <div style="margin-top: 35px;">
+            <button class="btn btn-accent" onclick="location.reload()">Play Again / Reset 🔄</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Refreshed local dataset split into team pools for an entirely new game experience
+    const masterGameData = {
+        trivia: [
+            // Team A Pool
+            [
+                "Which country invented paper? (Answer: China)",
+                "How many stripes are on the US flag? (Answer: 13)",
+                "What is the capital of Japan? (Answer: Tokyo)",
+                "Which animal is known as the Ship of the Desert? (Answer: Camel)",
+                "What is the main ingredient in guacamole? (Answer: Avocado)",
+                "In what sport do players use a mallet and ride horses? (Answer: Polo)",
+                "What is the largest organ in the human body? (Answer: Skin)",
+                "Which superhero is known as the Dark Knight? (Answer: Batman)",
+                "What is the chemical symbol for silver? (Answer: Ag)",
+                "How many legs does a spider have? (Answer: 8)"
+            ],
+            // Team B Pool
+            [
+                "What is the tallest mountain in the world? (Answer: Mount Everest)",
+                "Which country gifted the Statue of Liberty to the US? (Answer: France)",
+                "What color is a polar bear's skin underneath its fur? (Answer: Black)",
+                "What is the capital of Italy? (Answer: Rome)",
+                "How many days are in a leap year? (Answer: 366)",
+                "What is the national sport of Canada? (Answer: Lacrosse)",
+                "Which vitamin do we get primarily from sunlight? (Answer: Vitamin D)",
+                "What is the fastest land animal? (Answer: Cheetah)",
+                "Who wrote 'The Hobbit'? (Answer: J.R.R. Tolkien)",
+                "What is the primary currency used in the UK? (Answer: Pound Sterling)"
+            ]
+        ],
+        forehead: [
+            // Team A Pool
+            [
+                "Dwayne Johnson", "Harry Potter", "Lady Gaga", "Shrek", "Sherlock Holmes", 
+                "Barack Obama", "Yoda", "Katy Perry", "James Bond", "Elsa",
+                "Nelson Mandela", "SpongeBob SquarePants", "Rihanna", "Buzz Lightyear", "David Beckham"
+            ],
+            // Team B Pool
+            [
+                "Will Smith", "Hermione Granger", "Justin Bieber", "Simba", "Batman", 
+                "Donald Trump", "Darth Vader", "Ariana Grande", "Jack Sparrow", "Moana",
+                "Winston Churchill", "Homer Simpson", "Bruno Mars", "Woody", "Lionel Messi"
+            ]
+        ],
+        songs: [
+            // Team A Pool
+            [
+                "We Will Rock You", "Baby Shark", "Eye of the Tiger", "Stayin' Alive", "Let It Go", 
+                "Wonderwall", "Smooth Criminal", "Sweet Caroline", "Bohemian Rhapsody", "Y.M.C.A.",
+                "Wannabe", "Billie Jean", "Happy Birthday", "Twinkle Twinkle Little Star", "Jingle Bells"
+            ],
+            // Team B Pool
+            [
+                "Uptown Funk", "Shake It Off", "Counting Stars", "Bad Romance", "Rolling in the Deep", 
+                "All Star", "Call Me Maybe", "Poker Face", "Gangnam Style", "Party in the USA",
+                "Don't Stop Believin'", "Livin' on a Prayer", "Jingle Bell Rock", "Old MacDonald Had a Farm", "The ABC Song"
+            ]
+        ],
+        wordCategories: [
+            // Team A Pool
+            [
+                "Things found in a garage", "Cartoon characters", "Types of candy", "Things that are cold", "Zoo animals", 
+                "Breakfast foods", "Outdoor games", "Sci-fi movies", "Asian countries", "Things made of wood"
+            ],
+            // Team B Pool
+            [
+                "Things found in a school bag", "Superhero movies", "Types of shoes", "Things that are hot", "Farm animals", 
+                "Fast food items", "Indoor games", "Action movies", "European countries", "Things made of metal"
+            ]
+        ],
+        charades: [
+            // Team A Pool
+            ["Spider-Man", "Jaws", "Avatar", "Aladdin", "Harry Potter", "The Wizard of Oz", "Frozen", "Toy Story"],
+            // Team B Pool
+            ["Titanic", "Star Wars", "The Lion King", "Jurassic Park", "Finding Nemo", "Cinderella", "Home Alone", "Matrix"]
+        ]
+    };
+
+    const roundsConfig = [
+        { title: "Round 1: Trivia Hotseat", desc: "Test your general knowledge! 1 minute to blaze through up to 10 rapid-fire trivia questions.", type: "trivia", time: 60, mode: "standard" },
+        { title: "Round 2: Forehead Fiesta", desc: "Name on the forehead! 30 seconds to run through up to 15 quick celebrity/character cards.", type: "forehead", time: 30, mode: "standard" },
+        { title: "Round 3: Pitch-Perfect Maestro", desc: "Hum that tune! 30 seconds to get your team to guess up to 15 hummed songs.", type: "songs", time: 30, mode: "standard" },
+        { title: "Round 4: Word Association", desc: "Fast-talking category naming! 1 minute. Every 5 correct answers equals 1 point (capped at 10 points max).", type: "wordCategories", time: 60, mode: "word-assoc" },
+        { title: "Round 5: Silent Soundstage", desc: "Classic Charades! Act out your prompt silently before the 90-second clock runs out.", type: "charades", time: 90, mode: "standard" }
+    ];
+
+    let gameState = {
+        teamA: { name: "Team A", players: [], score: 0, assignments: [], jokerRound: 0 },
+        teamB: { name: "Team B", players: [], score: 0, assignments: [], jokerRound: 0 },
+        currentRoundIndex: 0,
+        currentTeamTurn: 'A',
+        timerInterval: null,
+        currentItemIndex: 0,
+        currentPromptsList: [],
+        turnPoints: 0,
+        rawWordCount: 0,
+        isTimerRunning: false,
+        isTurnFinished: false
+    };
+
+    function switchScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+        if(screenId !== 'screen-setup' && screenId !== 'screen-gameover') {
+            document.getElementById('global-scoreboard').style.display = 'flex';
+        } else {
+            document.getElementById('global-scoreboard').style.display = 'none';
         }
+    }
 
-        function shuffleArray(arr) {
-            const a = arr.slice();
-            for (let i = a.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [a[i], a[j]] = [a[j], a[i]];
-            }
-            return a;
-        }
+    function submitSetup() {
+        gameState.teamA.name = document.getElementById('setup-team-a').value;
+        gameState.teamB.name = document.getElementById('setup-team-b').value;
+        
+        gameState.teamA.players = [
+            document.getElementById('a-player-1').value,
+            document.getElementById('a-player-2').value,
+            document.getElementById('a-player-3').value
+        ];
+        gameState.teamB.players = [
+            document.getElementById('b-player-1').value,
+            document.getElementById('b-player-2').value,
+            document.getElementById('b-player-3').value
+        ];
 
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
+        document.getElementById('display-team-a-name').innerText = gameState.teamA.name;
+        document.getElementById('display-team-b-name').innerText = gameState.teamB.name;
+        
+        buildAssignmentScreens();
+        switchScreen('screen-assignments');
+    }
 
-        async function fetchQuestionsFromAPI(level, attempt = 1) {
-            const config = DIFFICULTY_CONFIG[level] || DIFFICULTY_CONFIG.Medium;
-            const category = config.categories && config.categories.length > 0
-                ? config.categories[Math.floor(Math.random() * config.categories.length)]
-                : null;
+    function buildAssignmentScreens() {
+        document.getElementById('dash-heading-a').innerText = gameState.teamA.name;
+        document.getElementById('dash-heading-b').innerText = gameState.teamB.name;
 
-            const params = new URLSearchParams({
-                amount: '20',
-                difficulty: config.otdbDifficulty,
-                type: 'multiple'
-            });
-            if (category) params.set('category', String(category));
+        let containerA = document.getElementById('team-a-assignments');
+        let containerB = document.getElementById('team-b-assignments');
+        containerA.innerHTML = '';
+        containerB.innerHTML = '';
 
-            const res = await fetch(`https://opentdb.com/api.php?${params.toString()}`);
-            if (!res.ok) {
-                throw new Error(`Network error (status ${res.status})`);
-            }
-            const data = await res.json();
-
-            if (data.response_code === 5 && attempt <= 3) {
-                await sleep(600 * attempt);
-                return fetchQuestionsFromAPI(level, attempt + 1);
-            }
-            if (data.response_code === 1) {
-                if (category) {
-                    return fetchQuestionsFromAPI(level, attempt);
-                }
-                throw new Error("Not enough questions available right now — try again.");
-            }
-            if (data.response_code !== 0 || !data.results || data.results.length === 0) {
-                throw new Error("The trivia service returned no questions. Please try again.");
-            }
-
-            return data.results.map(item => {
-                const correctText = decodeHtmlEntities(item.correct_answer);
-                const allOptions = shuffleArray([
-                    correctText,
-                    ...item.incorrect_answers.map(decodeHtmlEntities)
-                ]);
-                return {
-                    question: decodeHtmlEntities(item.question),
-                    options: allOptions,
-                    correctIndex: allOptions.indexOf(correctText)
-                };
-            });
-        }
-
-        const appState = {
-            view: 'viewWelcome',
-            difficulty: 'Medium',
-            questions: [],
-            currentIndex: 0,
-            score: 0
-        };
-
-        function saveState() {
-            localStorage.setItem('quizAppState', JSON.stringify(appState));
-        }
-
-        function loadState() {
-            const saved = localStorage.getItem('quizAppState');
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    Object.assign(appState, parsed);
-                } catch (e) {
-                    console.error("Failed to parse saved state", e);
-                }
-            }
-        }
-
-        function setDifficulty(level) {
-            appState.difficulty = level;
-            document.querySelectorAll('.diff-btn').forEach(btn => {
-                btn.className = "diff-btn bg-slate-800 hover:bg-slate-700 border border-slate-700 py-3 rounded-xl text-sm font-bold transition";
-            });
-            const activeBtn = document.getElementById('btn' + level);
-            if (activeBtn) {
-                activeBtn.className = "diff-btn bg-blue-600 border border-blue-500 py-3 rounded-xl text-sm font-bold transition shadow-lg shadow-blue-600/20";
-            }
-            saveState();
-        }
-
-        function switchView(viewName) {
-            appState.view = viewName;
-            ['viewWelcome', 'viewLoading', 'viewQuiz', 'viewResults'].forEach(v => {
-                document.getElementById(v).classList.add('hidden');
-            });
-            document.getElementById(viewName).classList.remove('hidden');
-            saveState();
-        }
-
-        async function generateAndStartQuiz() {
-            switchView('viewLoading');
-            document.getElementById('loadingText').innerText = `Fetching 20 ${appState.difficulty} questions from the web...`;
-
-            try {
-                const quiz = await fetchQuestionsFromAPI(appState.difficulty);
-                if (!quiz || quiz.length === 0) {
-                    throw new Error("No questions came back. Please try again.");
-                }
-
-                appState.questions = quiz;
-                appState.currentIndex = 0;
-                appState.score = 0;
-
-                switchView('viewQuiz');
-                renderQuestion();
-            } catch (err) {
-                const isBlockedByCSP = err instanceof TypeError;
-                const msg = isBlockedByCSP
-                    ? "Couldn't reach the trivia API. If you're viewing this inside an app's built-in preview pane, it may be sandboxing network requests — try downloading this HTML file and opening it directly in your browser instead. Otherwise, check your internet connection."
-                    : "Couldn't load questions from the internet: " + err.message + "\n\nPlease check your connection and try again.";
-                alert(msg);
-                switchView('viewWelcome');
-            }
-        }
-
-        function renderQuestion() {
-            const q = appState.questions[appState.currentIndex];
-            document.getElementById('quizProgressText').innerText = `Question ${appState.currentIndex + 1} of ${appState.questions.length}`;
-            document.getElementById('quizScoreText').innerText = `Score: ${appState.score}`;
-            document.getElementById('questionTitle').innerText = q.question;
-            document.getElementById('nextQuestionBtn').classList.add('hidden');
-
-            const optionsContainer = document.getElementById('optionsContainer');
-            optionsContainer.innerHTML = "";
-
-            q.options.forEach((opt, idx) => {
-                const btn = document.createElement('button');
-                btn.className = "option-btn w-full text-left bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl p-4 transition font-medium text-slate-200";
-                btn.innerText = opt;
-                btn.addEventListener('click', () => handleOptionSelect(btn, idx, q.correctIndex));
-                optionsContainer.appendChild(btn);
-            });
-            saveState();
-        }
-
-        function handleOptionSelect(btnElement, selectedIdx, correctIdx) {
-            const buttons = document.querySelectorAll('.option-btn');
-            buttons.forEach(b => b.disabled = true);
-
-            if (selectedIdx === correctIdx) {
-                btnElement.classList.remove('bg-slate-800', 'border-slate-700');
-                btnElement.classList.add('bg-emerald-900/50', 'border-emerald-500', 'text-emerald-200');
-                appState.score++;
-            } else {
-                btnElement.classList.remove('bg-slate-800', 'border-slate-700');
-                btnElement.classList.add('bg-rose-900/50', 'border-rose-500', 'text-rose-200');
-                buttons[correctIdx].classList.remove('bg-slate-800', 'border-slate-700');
-                buttons[correctIdx].classList.add('bg-emerald-900/50', 'border-emerald-500', 'text-emerald-200');
-            }
-
-            document.getElementById('quizScoreText').innerText = `Score: ${appState.score}`;
-            document.getElementById('nextQuestionBtn').classList.remove('hidden');
-            saveState();
-        }
-
-        function handleNextQuestion() {
-            appState.currentIndex++;
-            if (appState.currentIndex < appState.questions.length) {
-                renderQuestion();
-            } else {
-                switchView('viewResults');
-                const finalScore = appState.score;
-                const total = appState.questions.length;
-                document.getElementById('finalScoreDisplay').innerText = `${finalScore} / ${total}`;
-
-                let verdict = "Great job completing the quiz!";
-                if (finalScore >= 17) verdict = "🌟 Outstanding! Exceptional score.";
-                else if (finalScore <= 10) verdict = "💡 Good effort! Try another round to improve.";
-                document.getElementById('performanceVerdict').innerText = verdict;
-            }
-            saveState();
-        }
-
-        // Initialize state on page load
-        window.addEventListener('DOMContentLoaded', () => {
-            loadState();
-            setDifficulty(appState.difficulty);
-
-            if (appState.view === 'viewQuiz' && appState.questions.length > 0) {
-                switchView('viewQuiz');
-                renderQuestion();
-            } else if (appState.view === 'viewResults' && appState.questions.length > 0) {
-                switchView('viewResults');
-                const finalScore = appState.score;
-                const total = appState.questions.length;
-                document.getElementById('finalScoreDisplay').innerText = `${finalScore} / ${total}`;
-
-                let verdict = "Great job completing the quiz!";
-                if (finalScore >= 17) verdict = "🌟 Outstanding! Exceptional score.";
-                else if (finalScore <= 10) verdict = "💡 Good effort! Try another round to improve.";
-                document.getElementById('performanceVerdict').innerText = verdict;
-            } else {
-                switchView('viewWelcome');
-            }
+        roundsConfig.forEach((round, index) => {
+            containerA.innerHTML += createAssignmentCard('A', index, round.title, round.desc);
+            containerB.innerHTML += createAssignmentCard('B', index, round.title, round.desc);
         });
+    }
 
-        // Attach Event Listeners
-        document.getElementById('btnEasy').addEventListener('click', () => setDifficulty('Easy'));
-        document.getElementById('btnMedium').addEventListener('click', () => setDifficulty('Medium'));
-        document.getElementById('btnHard').addEventListener('click', () => setDifficulty('Hard'));
-        document.getElementById('startQuizBtn').addEventListener('click', generateAndStartQuiz);
-        document.getElementById('nextQuestionBtn').addEventListener('click', handleNextQuestion);
-        document.getElementById('restartQuizBtn').addEventListener('click', () => {
-            localStorage.removeItem('quizAppState');
-            generateAndStartQuiz();
-        });
-        document.getElementById('changeDiffBtn').addEventListener('click', () => {
-            localStorage.removeItem('quizAppState');
-            switchView('viewWelcome');
-        });
-    </script>
+    function createAssignmentCard(teamPrefix, roundIdx, roundTitle, roundDesc) {
+        let players = teamPrefix === 'A' ? gameState.teamA.players : gameState.teamB.players;
+        let playerOptions = players.map(p => `<option value="${p}">${p}</option>`).join('');
+
+        return `
+            <div class="assignment-card">
+                <h4>${roundTitle}</h4>
+                <p>${roundDesc}</p>
+                <label>Main Player:</label>
+                <select id="assign-${teamPrefix}-player-${roundIdx}">
+                    ${playerOptions}
+                </select>
+                <label style="display: block; margin-top: 8px; font-weight: 500;">
+                    <input type="radio" name="joker-${teamPrefix}" value="${roundIdx}" ${roundIdx === 0 ? 'checked' : ''}> Play Joker Here (2x Pts)
+                </label>
+            </div>
+        `;
+    }
+
+    function lockAssignments() {
+        for(let i=0; i<roundsConfig.length; i++) {
+            gameState.teamA.assignments.push(document.getElementById(`assign-A-player-${i}`).value);
+        }
+        let jokerRadioA = document.querySelector('input[name="joker-A"]:checked');
+        gameState.teamA.jokerRound = jokerRadioA ? parseInt(jokerRadioA.value) : 0;
+
+        for(let i=0; i<roundsConfig.length; i++) {
+            gameState.teamB.assignments.push(document.getElementById(`assign-B-player-${i}`).value);
+        }
+        let jokerRadioB = document.querySelector('input[name="joker-B"]:checked');
+        gameState.teamB.jokerRound = jokerRadioB ? parseInt(jokerRadioB.value) : 0;
+
+        gameState.currentRoundIndex = 0;
+        gameState.currentTeamTurn = 'A';
+        prepTurn();
+    }
+
+    function updateScoreboard() {
+        document.getElementById('display-team-a-score').innerText = gameState.teamA.score;
+        document.getElementById('display-team-b-score').innerText = gameState.teamB.score;
+    }
+
+    function prepTurn() {
+        if(gameState.currentRoundIndex >= roundsConfig.length) {
+            endGame();
+            return;
+        }
+
+        let round = roundsConfig[gameState.currentRoundIndex];
+        let activeTeamName = gameState.currentTeamTurn === 'A' ? gameState.teamA.name : gameState.teamB.name;
+        let activeRep = gameState.currentTeamTurn === 'A' 
+            ? gameState.teamA.assignments[gameState.currentRoundIndex] 
+            : gameState.teamB.assignments[gameState.currentRoundIndex];
+
+        // Trigger Popup Modal
+        document.getElementById('modal-team-heading').innerText = `${activeTeamName}'s Turn`;
+        document.getElementById('modal-round-title').innerText = round.title;
+        document.getElementById('modal-rep-text').innerText = `Main Player: ${activeRep}`;
+        document.getElementById('round-modal').style.display = 'flex';
+    }
+
+    function closeModalAndReady() {
+        document.getElementById('round-modal').style.display = 'none';
+        loadTurnScreen();
+    }
+
+    function loadTurnScreen() {
+        let round = roundsConfig[gameState.currentRoundIndex];
+        document.getElementById('play-title').innerText = round.title;
+        document.getElementById('play-instructions').innerText = round.desc;
+
+        let activeTeamName = gameState.currentTeamTurn === 'A' ? gameState.teamA.name : gameState.teamB.name;
+        let activeRep = gameState.currentTeamTurn === 'A' 
+            ? gameState.teamA.assignments[gameState.currentRoundIndex] 
+            : gameState.teamB.assignments[gameState.currentRoundIndex];
+        
+        let isJokerRound = (gameState.currentTeamTurn === 'A' && gameState.currentRoundIndex === gameState.teamA.jokerRound) ||
+                           (gameState.currentTeamTurn === 'B' && gameState.currentRoundIndex === gameState.teamB.jokerRound);
+
+        document.getElementById('stat-active-team').innerText = activeTeamName;
+        document.getElementById('stat-rep-name').innerText = activeRep;
+        
+        let jokerStatusElem = document.getElementById('stat-joker-status');
+        if(isJokerRound) {
+            jokerStatusElem.innerText = "🃏 ACTIVE (Double Points!)";
+            jokerStatusElem.style.color = "var(--accent)";
+        } else {
+            jokerStatusElem.innerText = "Standard Round";
+            jokerStatusElem.style.color = "var(--text-muted)";
+        }
+
+        gameState.turnPoints = 0;
+        gameState.rawWordCount = 0;
+        gameState.isTurnFinished = false;
+
+        if (round.mode === 'word-assoc') {
+            document.getElementById('score-tracking-container').innerHTML = 
+                `Correct Answers: <span id="raw-word-display" style="font-size: 1.5rem; font-weight: 800; color: var(--success);">0</span> (Equals <span id="current-turn-pts" style="font-size: 1.8rem; font-weight: 800; color: var(--accent);">0</span> pts)`;
+            document.getElementById('controls-hint').innerHTML = 
+                `Keyboard Shortcuts: <kbd>ENTER</kbd> = Valid Item (+1 Answer) &nbsp;|&nbsp; <kbd>SPACEBAR</kbd> = Skip/Invalid`;
+        } else {
+            document.getElementById('score-tracking-container').innerHTML = 
+                `Turn Score: <span id="current-turn-pts" style="font-size: 1.8rem; font-weight: 800; color: var(--success);">0</span> points`;
+            document.getElementById('controls-hint').innerHTML = 
+                `Keyboard Shortcuts: <kbd>ENTER</kbd> = Correct (+1 pt & Next) &nbsp;|&nbsp; <kbd>SPACEBAR</kbd> = Skip (No Point & Next)`;
+        }
+
+        // Pull unique list for Team A (pool index 0) or Team B (pool index 1)
+        let poolIndex = gameState.currentTeamTurn === 'A' ? 0 : 1;
+        gameState.currentPromptsList = [...masterGameData[round.type][poolIndex]].sort(() => Math.random() - 0.5);
+        gameState.currentItemIndex = 0;
+        document.getElementById('play-prompt').innerText = `Ready, ${activeRep}? Press 'Start Turn' below.`;
+        
+        document.getElementById('start-turn-btn').style.display = 'inline-block';
+        document.getElementById('finish-turn-btn').style.display = 'none';
+
+        document.getElementById('timer').innerText = formatTime(round.time);
+        gameState.isTimerRunning = false;
+
+        switchScreen('screen-play');
+    }
+
+    function startTurnTimer() {
+        document.getElementById('start-turn-btn').style.display = 'none';
+        document.getElementById('finish-turn-btn').style.display = 'inline-block';
+        
+        let round = roundsConfig[gameState.currentRoundIndex];
+        nextPrompt();
+        startTimer(round.time);
+        gameState.isTimerRunning = true;
+    }
+
+    function startTimer(seconds) {
+        clearInterval(gameState.timerInterval);
+        let timeLeft = seconds;
+        let timerDisplay = document.getElementById('timer');
+        timerDisplay.innerText = formatTime(timeLeft);
+        
+        gameState.timerInterval = setInterval(() => {
+            timeLeft--;
+            timerDisplay.innerText = formatTime(timeLeft);
+            if(timeLeft <= 0) {
+                clearInterval(gameState.timerInterval);
+                finishTurnByTimerOrPrompts("⏰ Time's up for this turn! Round Finished.");
+            }
+        }, 1000);
+    }
+
+    function formatTime(seconds) {
+        let m = Math.floor(seconds / 60);
+        let s = seconds % 60;
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
+    function nextPrompt() {
+        if(gameState.isTurnFinished) return;
+
+        if(gameState.currentItemIndex < gameState.currentPromptsList.length) {
+            document.getElementById('play-prompt').innerText = gameState.currentPromptsList[gameState.currentItemIndex];
+            gameState.currentItemIndex++;
+        } else {
+            finishTurnByTimerOrPrompts("🎉 All prompts completed! Round Finished.");
+        }
+    }
+
+    function finishTurnByTimerOrPrompts(message) {
+        if(gameState.isTurnFinished) return;
+        gameState.isTurnFinished = true;
+        clearInterval(gameState.timerInterval);
+        gameState.isTimerRunning = false;
+
+        document.getElementById('play-prompt').innerText = "🔒 TURN FINISHED - No more points can be scored!";
+        alert(message);
+    }
+
+    // Keyboard controls handler
+    document.addEventListener('keydown', function(event) {
+        if(!document.getElementById('screen-play').classList.contains('active')) return;
+        if(!gameState.isTimerRunning || gameState.isTurnFinished) return;
+
+        let round = roundsConfig[gameState.currentRoundIndex];
+
+        if(event.code === 'Enter') {
+            event.preventDefault();
+            if (round.mode === 'word-assoc') {
+                gameState.rawWordCount += 1;
+                let calculatedPts = Math.min(10, Math.floor(gameState.rawWordCount / 5));
+                gameState.turnPoints = calculatedPts;
+                document.getElementById('raw-word-display').innerText = gameState.rawWordCount;
+                document.getElementById('current-turn-pts').innerText = calculatedPts;
+            } else {
+                gameState.turnPoints += 1;
+                document.getElementById('current-turn-pts').innerText = gameState.turnPoints;
+            }
+            nextPrompt();
+        } else if(event.code === 'Space') {
+            event.preventDefault();
+            nextPrompt();
+        }
+    });
+
+    function completeTurn() {
+        clearInterval(gameState.timerInterval);
+        gameState.isTimerRunning = false;
+        gameState.isTurnFinished = true;
+
+        let finalTurnPts = gameState.turnPoints;
+
+        let isJoker = (gameState.currentTeamTurn === 'A' && gameState.currentRoundIndex === gameState.teamA.jokerRound) ||
+                      (gameState.currentTeamTurn === 'B' && gameState.currentRoundIndex === gameState.teamB.jokerRound);
+        
+        if(isJoker) {
+            finalTurnPts *= 2;
+            alert(`🃏 Joker activated! Points doubled for this turn!`);
+        }
+
+        if(gameState.currentTeamTurn === 'A') {
+            gameState.teamA.score += finalTurnPts;
+            gameState.currentTeamTurn = 'B'; 
+            updateScoreboard();
+            prepTurn();
+        } else {
+            gameState.teamB.score += finalTurnPts;
+            gameState.currentTeamTurn = 'A'; 
+            gameState.currentRoundIndex++; 
+            updateScoreboard();
+            prepTurn();
+        }
+    }
+
+    function endGame() {
+        switchScreen('screen-gameover');
+        document.getElementById('final-team-a-name').innerText = gameState.teamA.name;
+        document.getElementById('final-team-b-name').innerText = gameState.teamB.name;
+        document.getElementById('final-team-a-score').innerText = gameState.teamA.score;
+        document.getElementById('final-team-b-score').innerText = gameState.teamB.score;
+
+        let winnerText = "";
+        if(gameState.teamA.score > gameState.teamB.score) {
+            winnerText = `🏆 Winner: ${gameState.teamA.name}! 🏆`;
+        } else if(gameState.teamB.score > gameState.teamA.score) {
+            winnerText = `🏆 Winner: ${gameState.teamB.name}! 🏆`;
+        } else {
+            winnerText = `It's a Tie! Incredible game!`;
+        }
+        document.getElementById('winner-announcement').innerText = winnerText;
+    }
+</script>
+
 </body>
 </html>
