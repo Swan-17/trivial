@@ -401,7 +401,7 @@
             </div>
         </div>
         <div style="margin-top: 35px;">
-            <button class="btn btn-accent" onclick="location.reload()">Play Again / Reset 🔄</button>
+            <button class="btn btn-accent" onclick="resetGameStorage()">Play Again / Reset 🔄</button>
         </div>
     </div>
 
@@ -494,10 +494,14 @@
     ];
 
     let gameState = {
+        screen: 'screen-setup',
         teamA: { name: "Team A", players: [], score: 0, assignments: [] },
         teamB: { name: "Team B", players: [], score: 0, assignments: [] },
         currentRoundIndex: 0,
-        currentTeamTurn: 'A',
+        currentTeamTurn: 'A'
+    };
+
+    let runtimeTurnState = {
         timerInterval: null,
         currentItemIndex: 0,
         currentPromptsList: [],
@@ -507,14 +511,61 @@
         isTurnFinished: false
     };
 
-    function switchScreen(screenId) {
+    function saveState() {
+        localStorage.setItem('family_game_state', JSON.stringify(gameState));
+    }
+
+    function loadState() {
+        let saved = localStorage.getItem('family_game_state');
+        if(saved) {
+            try {
+                gameState = JSON.parse(saved);
+            } catch(e) {
+                console.error("Could not parse saved state", e);
+            }
+        }
+    }
+
+    function resetGameStorage() {
+        localStorage.removeItem('family_game_state');
+        location.reload();
+    }
+
+    window.onload = function() {
+        loadState();
+        updateScoreboardLabels();
+
+        if(gameState.screen === 'screen-assignments') {
+            buildAssignmentScreensFromSaved();
+            switchScreen('screen-assignments', false);
+        } else if(gameState.screen === 'screen-play') {
+            switchScreen('screen-play', false);
+            loadTurnScreen(false); // Do not pop modal on a simple page refresh during turn play
+        } else if(gameState.screen === 'screen-gameover') {
+            endGame(false);
+        } else {
+            switchScreen('screen-setup', false);
+        }
+    };
+
+    function switchScreen(screenId, save=true) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
+        gameState.screen = screenId;
+        if(save) saveState();
+
         if(screenId !== 'screen-setup' && screenId !== 'screen-gameover') {
             document.getElementById('global-scoreboard').style.display = 'flex';
         } else {
             document.getElementById('global-scoreboard').style.display = 'none';
         }
+    }
+
+    function updateScoreboardLabels() {
+        document.getElementById('display-team-a-name').innerText = gameState.teamA.name;
+        document.getElementById('display-team-b-name').innerText = gameState.teamB.name;
+        document.getElementById('display-team-a-score').innerText = gameState.teamA.score;
+        document.getElementById('display-team-b-score').innerText = gameState.teamB.score;
     }
 
     function submitSetup() {
@@ -532,9 +583,7 @@
             document.getElementById('b-player-3').value
         ];
 
-        document.getElementById('display-team-a-name').innerText = gameState.teamA.name;
-        document.getElementById('display-team-b-name').innerText = gameState.teamB.name;
-        
+        updateScoreboardLabels();
         buildAssignmentScreens();
         switchScreen('screen-assignments');
     }
@@ -554,6 +603,16 @@
         });
     }
 
+    function buildAssignmentScreensFromSaved() {
+        buildAssignmentScreens();
+        for(let i=0; i<roundsConfig.length; i++) {
+            let elemA = document.getElementById(`assign-A-player-${i}`);
+            let elemB = document.getElementById(`assign-B-player-${i}`);
+            if(elemA && gameState.teamA.assignments[i]) elemA.value = gameState.teamA.assignments[i];
+            if(elemB && gameState.teamB.assignments[i]) elemB.value = gameState.teamB.assignments[i];
+        }
+    }
+
     function createAssignmentCard(teamPrefix, roundIdx, roundTitle, roundDesc) {
         let players = teamPrefix === 'A' ? gameState.teamA.players : gameState.teamB.players;
         let playerOptions = players.map(p => `<option value="${p}">${p}</option>`).join('');
@@ -571,6 +630,8 @@
     }
 
     function lockAssignments() {
+        gameState.teamA.assignments = [];
+        gameState.teamB.assignments = [];
         for(let i=0; i<roundsConfig.length; i++) {
             gameState.teamA.assignments.push(document.getElementById(`assign-A-player-${i}`).value);
         }
@@ -580,12 +641,8 @@
 
         gameState.currentRoundIndex = 0;
         gameState.currentTeamTurn = 'A';
+        saveState();
         prepTurn();
-    }
-
-    function updateScoreboard() {
-        document.getElementById('display-team-a-score').innerText = gameState.teamA.score;
-        document.getElementById('display-team-b-score').innerText = gameState.teamB.score;
     }
 
     function prepTurn() {
@@ -600,7 +657,6 @@
             ? gameState.teamA.assignments[gameState.currentRoundIndex] 
             : gameState.teamB.assignments[gameState.currentRoundIndex];
 
-        // Trigger Popup Modal
         document.getElementById('modal-team-heading').innerText = `${activeTeamName}'s Turn`;
         document.getElementById('modal-round-title').innerText = round.title;
         document.getElementById('modal-rep-text').innerText = `Main Player: ${activeRep}`;
@@ -609,10 +665,10 @@
 
     function closeModalAndReady() {
         document.getElementById('round-modal').style.display = 'none';
-        loadTurnScreen();
+        loadTurnScreen(true);
     }
 
-    function loadTurnScreen() {
+    function loadTurnScreen(showReadyPrompt = true) {
         let round = roundsConfig[gameState.currentRoundIndex];
         document.getElementById('play-title').innerText = round.title;
         document.getElementById('play-instructions').innerText = round.desc;
@@ -625,9 +681,9 @@
         document.getElementById('stat-active-team').innerText = activeTeamName;
         document.getElementById('stat-rep-name').innerText = activeRep;
 
-        gameState.turnPoints = 0;
-        gameState.rawWordCount = 0;
-        gameState.isTurnFinished = false;
+        runtimeTurnState.turnPoints = 0;
+        runtimeTurnState.rawWordCount = 0;
+        runtimeTurnState.isTurnFinished = false;
 
         if (round.mode === 'word-assoc') {
             document.getElementById('score-tracking-container').innerHTML = 
@@ -642,15 +698,21 @@
         }
 
         let poolIndex = gameState.currentTeamTurn === 'A' ? 0 : 1;
-        gameState.currentPromptsList = [...masterGameData[round.type][poolIndex]].sort(() => Math.random() - 0.5);
-        gameState.currentItemIndex = 0;
-        document.getElementById('play-prompt').innerText = `Ready, ${activeRep}? Press 'Start Turn' below.`;
+        runtimeTurnState.currentPromptsList = [...masterGameData[round.type][poolIndex]].sort(() => Math.random() - 0.5);
+        runtimeTurnState.currentItemIndex = 0;
         
-        document.getElementById('start-turn-btn').style.display = 'inline-block';
-        document.getElementById('finish-turn-btn').style.display = 'none';
+        if(showReadyPrompt) {
+            document.getElementById('play-prompt').innerText = `Ready, ${activeRep}? Press 'Start Turn' below.`;
+            document.getElementById('start-turn-btn').style.display = 'inline-block';
+            document.getElementById('finish-turn-btn').style.display = 'none';
+        } else {
+            document.getElementById('play-prompt').innerText = `Refreshed page. Press 'Start Turn' to begin.`;
+            document.getElementById('start-turn-btn').style.display = 'inline-block';
+            document.getElementById('finish-turn-btn').style.display = 'none';
+        }
 
         document.getElementById('timer').innerText = formatTime(round.time);
-        gameState.isTimerRunning = false;
+        runtimeTurnState.isTimerRunning = false;
 
         switchScreen('screen-play');
     }
@@ -662,20 +724,20 @@
         let round = roundsConfig[gameState.currentRoundIndex];
         nextPrompt();
         startTimer(round.time);
-        gameState.isTimerRunning = true;
+        runtimeTurnState.isTimerRunning = true;
     }
 
     function startTimer(seconds) {
-        clearInterval(gameState.timerInterval);
+        clearInterval(runtimeTurnState.timerInterval);
         let timeLeft = seconds;
         let timerDisplay = document.getElementById('timer');
         timerDisplay.innerText = formatTime(timeLeft);
         
-        gameState.timerInterval = setInterval(() => {
+        runtimeTurnState.timerInterval = setInterval(() => {
             timeLeft--;
             timerDisplay.innerText = formatTime(timeLeft);
             if(timeLeft <= 0) {
-                clearInterval(gameState.timerInterval);
+                clearInterval(runtimeTurnState.timerInterval);
                 finishTurnByTimerOrPrompts("⏰ Time's up for this turn! Round Finished.");
             }
         }, 1000);
@@ -688,21 +750,21 @@
     }
 
     function nextPrompt() {
-        if(gameState.isTurnFinished) return;
+        if(runtimeTurnState.isTurnFinished) return;
 
-        if(gameState.currentItemIndex < gameState.currentPromptsList.length) {
-            document.getElementById('play-prompt').innerText = gameState.currentPromptsList[gameState.currentItemIndex];
-            gameState.currentItemIndex++;
+        if(runtimeTurnState.currentItemIndex < runtimeTurnState.currentPromptsList.length) {
+            document.getElementById('play-prompt').innerText = runtimeTurnState.currentPromptsList[runtimeTurnState.currentItemIndex];
+            runtimeTurnState.currentItemIndex++;
         } else {
             finishTurnByTimerOrPrompts("🎉 All prompts completed! Round Finished.");
         }
     }
 
     function finishTurnByTimerOrPrompts(message) {
-        if(gameState.isTurnFinished) return;
-        gameState.isTurnFinished = true;
-        clearInterval(gameState.timerInterval);
-        gameState.isTimerRunning = false;
+        if(runtimeTurnState.isTurnFinished) return;
+        runtimeTurnState.isTurnFinished = true;
+        clearInterval(runtimeTurnState.timerInterval);
+        runtimeTurnState.isTimerRunning = false;
 
         document.getElementById('play-prompt').innerText = "🔒 TURN FINISHED - No more points can be scored!";
         alert(message);
@@ -710,21 +772,21 @@
 
     document.addEventListener('keydown', function(event) {
         if(!document.getElementById('screen-play').classList.contains('active')) return;
-        if(!gameState.isTimerRunning || gameState.isTurnFinished) return;
+        if(!runtimeTurnState.isTimerRunning || runtimeTurnState.isTurnFinished) return;
 
         let round = roundsConfig[gameState.currentRoundIndex];
 
         if(event.code === 'Enter') {
             event.preventDefault();
             if (round.mode === 'word-assoc') {
-                gameState.rawWordCount += 1;
-                let calculatedPts = Math.min(10, Math.floor(gameState.rawWordCount / 5));
-                gameState.turnPoints = calculatedPts;
-                document.getElementById('raw-word-display').innerText = gameState.rawWordCount;
+                runtimeTurnState.rawWordCount += 1;
+                let calculatedPts = Math.min(10, Math.floor(runtimeTurnState.rawWordCount / 5));
+                runtimeTurnState.turnPoints = calculatedPts;
+                document.getElementById('raw-word-display').innerText = runtimeTurnState.rawWordCount;
                 document.getElementById('current-turn-pts').innerText = calculatedPts;
             } else {
-                gameState.turnPoints += 1;
-                document.getElementById('current-turn-pts').innerText = gameState.turnPoints;
+                runtimeTurnState.turnPoints += 1;
+                document.getElementById('current-turn-pts').innerText = runtimeTurnState.turnPoints;
             }
             nextPrompt();
         } else if(event.code === 'Space') {
@@ -734,28 +796,30 @@
     });
 
     function completeTurn() {
-        clearInterval(gameState.timerInterval);
-        gameState.isTimerRunning = false;
-        gameState.isTurnFinished = true;
+        clearInterval(runtimeTurnState.timerInterval);
+        runtimeTurnState.isTimerRunning = false;
+        runtimeTurnState.isTurnFinished = true;
 
-        let finalTurnPts = gameState.turnPoints;
+        let finalTurnPts = runtimeTurnState.turnPoints;
 
         if(gameState.currentTeamTurn === 'A') {
             gameState.teamA.score += finalTurnPts;
             gameState.currentTeamTurn = 'B'; 
-            updateScoreboard();
+            updateScoreboardLabels();
+            saveState();
             prepTurn();
         } else {
             gameState.teamB.score += finalTurnPts;
             gameState.currentTeamTurn = 'A'; 
             gameState.currentRoundIndex++; 
-            updateScoreboard();
+            updateScoreboardLabels();
+            saveState();
             prepTurn();
         }
     }
 
-    function endGame() {
-        switchScreen('screen-gameover');
+    function endGame(save = true) {
+        switchScreen('screen-gameover', save);
         document.getElementById('final-team-a-name').innerText = gameState.teamA.name;
         document.getElementById('final-team-b-name').innerText = gameState.teamB.name;
         document.getElementById('final-team-a-score').innerText = gameState.teamA.score;
